@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propuesta Comercial — El Rey Mayorista</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ─────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* 60% — fondo principal */
+      --bg-primary: #F0F7FA;
+      --bg-light: #E6F0F5;
+
+      /* 30% — superficies / cards */
+      --surface: #FFFFFF;
+      --surface-alt: #1B2A38;
+      --surface-dark: #0F1C28;
+      --text-primary: #1B2A38;
+      --text-secondary: #4A6274;
+      --text-muted: #8A9DAD;
+      --text-on-dark: #F0F7FA;
+
+      /* 10% — acento */
+      --accent: #00B4D8;
+      --accent-light: #90E0EF;
+      --accent-dark: #0077B6;
+      --accent-glow: #00b4d826;
+      --highlight: #FFB703;
+      --highlight-light: #FFF3D6;
+
+      --danger: #E63946;
+      --success: #2A9D8F;
+
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --shadow: 0 4px 24px rgba(15, 28, 40, 0.06);
+      --shadow-lg: 0 12px 48px rgba(15, 28, 40, 0.10);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Typography ───────────────────────────────── */
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1; }
+    h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; line-height: 1.2; }
+    h3 { font-size: 1.15rem; font-weight: 700; line-height: 1.3; }
+    p { font-size: 0.95rem; }
+
+    /* ── Layout ────────────────────────────────────── */
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section {
+      padding: 64px 0;
+    }
+
+    /* ── Section Label (pill) ─────────────────────── */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-glow);
+      color: var(--accent-dark);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+    }
+
+    .section-label .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    /* ── HERO ──────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(145deg, var(--surface-dark) 0%, var(--surface-alt) 100%);
+      padding: 80px 0 72px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -150px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      opacity: 0.08;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -80px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, var(--highlight) 0%, transparent 70%);
+      opacity: 0.06;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 180, 216, 0.12);
+      border: 1px solid rgba(0, 180, 216, 0.25);
+      color: var(--accent-light);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      color: var(--text-on-dark);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 span {
+      color: var(--accent);
+    }
+
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      font-weight: 300;
+      max-width: 560px;
+      margin-bottom: 40px;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .hero-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hero-meta-item .label {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 500;
+    }
+
+    .hero-meta-item .value {
+      color: var(--text-on-dark);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* ── NAV dots ──────────────────────────────────── */
+    .nav-dots {
+      position: fixed;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      opacity: 0.3;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      position: relative;
+    }
+
+    .nav-dot:hover,
+    .nav-dot.active {
+      opacity: 1;
+      background: var(--accent);
+      transform: scale(1.3);
+    }
+
+    .nav-dot::after {
+      content: attr(data-label);
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--surface-alt);
+      color: var(--text-on-dark);
+      font-size: 0.65rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .nav-dot:hover::after { opacity: 1; }
+
+    /* ── SITUACION ACTUAL ─────────────────────────── */
+    .situation { background: var(--bg-primary); }
+
+    .situation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .sit-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .sit-card h3 {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sit-card h3 .icon {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-xs);
+      font-size: 1rem;
+    }
+
+    .icon-success { background: rgba(42, 157, 143, 0.1); color: var(--success); }
+    .icon-danger { background: rgba(230, 57, 70, 0.1); color: var(--danger); }
+    .icon-accent { background: var(--accent-glow); color: var(--accent-dark); }
+    .icon-highlight { background: var(--highlight-light); color: #B8860B; }
+
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .checklist .check {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    .check-ok { background: rgba(42, 157, 143, 0.12); color: var(--success); }
+    .check-fail { background: rgba(230, 57, 70, 0.12); color: var(--danger); }
+
+    /* Problem callout */
+    .problem-callout {
+      background: linear-gradient(135deg, #FFF5F5 0%, #FFF0F0 100%);
+      border: 1px solid rgba(230, 57, 70, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      margin-top: 16px;
+    }
+
+    .problem-callout p {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+    }
+
+    .problem-callout strong { color: var(--danger); }
+
+    /* ── OPCIONES SHOPIFY ─────────────────────────── */
+    .options { background: var(--bg-light); }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .option-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .option-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .option-card.recommended {
+      border: 2px solid var(--accent);
+    }
+
+    .option-card.recommended::before {
+      content: 'RECOMENDADA';
+      position: relative;
+      background: var(--accent);
+      color: white;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      z-index: 2;
+      margin: 1rem !important;
+      top: 10px;
+    }
+
+    .option-header {
+      padding: 28px 28px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .option-letter {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 900;
+      flex-shrink: 0;
+      color: white;
+    }
+
+    .letter-a { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); }
+    .letter-b { background: linear-gradient(135deg, #6366F1 0%, #4338CA 100%); }
+    .letter-c { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+    .letter-d { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+
+    .option-header-text h3 { font-size: 1.05rem; margin-bottom: 4px; }
+    .option-header-text p { font-size: 0.8rem; color: var(--text-muted); }
+
+    .option-body { padding: 24px 28px 28px; }
+
+    .option-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .metric {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xs);
+      padding: 12px 14px;
+    }
+
+    .metric .metric-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .metric .metric-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .metric .metric-value.cost { color: var(--accent-dark); }
+    .metric .metric-value.time { color: var(--success); }
+    .metric .metric-value.warn { color: #D97706; }
+
+    .option-pros,
+    .option-cons {
+      margin-bottom: 12px;
+    }
+
+    .option-pros h4,
+    .option-cons h4 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .option-pros h4 { color: var(--success); }
+    .option-cons h4 { color: var(--danger); }
+
+    .mini-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mini-list li {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .mini-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .option-pros .mini-list li::before { background: var(--success); }
+    .option-cons .mini-list li::before { background: var(--danger); opacity: 0.4; }
+
+    /* ── ALTERNATIVAS ─────────────────────────────── */
+    .alternatives { background: var(--bg-primary); }
+
+    .alt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .alt-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .alt-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .alt-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .alt-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .alt-icon.woo { background: linear-gradient(135deg, #9B5DE5 0%, #7B2FF7 100%); }
+    .alt-icon.custom { background: linear-gradient(135deg, #F72585 0%, #B5179E 100%); }
+
+    .alt-card-header h3 { font-size: 1.1rem; }
+    .alt-card-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .alt-card .option-metrics { margin-bottom: 20px; }
+
+    /* ── COMPARATIVA ───────────────────────────────── */
+    .compare { background: var(--surface-dark); color: var(--text-on-dark); }
+
+    .compare h2 { color: var(--text-on-dark); }
+
+    .compare-table-wrap {
+      margin-top: 32px;
+      overflow-x: auto;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 800px;
+    }
+
+    .compare-table thead th {
+      background: rgba(0, 180, 216, 0.1);
+      color: var(--accent-light);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      white-space: nowrap;
+    }
+
+    .compare-table thead th:first-child {
+      border-radius: var(--radius) 0 0 0;
+    }
+
+    .compare-table thead th:last-child {
+      border-radius: 0 var(--radius) 0 0;
+    }
+
+    .compare-table tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: rgba(240, 247, 250, 0.85);
+      vertical-align: top;
+    }
+
+    .compare-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .compare-table tbody tr:last-child td:first-child {
+      border-radius: 0 0 0 var(--radius);
+    }
+
+    .compare-table tbody tr:last-child td:last-child {
+      border-radius: 0 0 var(--radius) 0;
+    }
+
+    .compare-table tbody td:first-child {
+      font-weight: 700;
+      color: var(--text-on-dark);
+      background: rgba(0,0,0,0.1);
+      font-size: 0.75rem;
+      letter-spacing: 0.3px;
+    }
+
+    .compare-table tbody tr:hover td {
+      background: rgba(0, 180, 216, 0.04);
+    }
+
+    .compare-table tbody tr:hover td:first-child {
+      background: rgba(0, 180, 216, 0.08);
+    }
+
+    .compare-table .highlight-col {
+      background: rgba(0, 180, 216, 0.06);
+    }
+
+    .pill-good, .pill-mid, .pill-bad {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 100px;
+    }
+
+    .pill-good { background: rgba(42, 157, 143, 0.2); color: #5EEAD4; }
+    .pill-mid { background: rgba(245, 158, 11, 0.2); color: #FCD34D; }
+    .pill-bad { background: rgba(230, 57, 70, 0.15); color: #FCA5A5; }
+
+    /* ── RECOMENDACION ─────────────────────────────── */
+    .recommendation { background: var(--bg-light); }
+
+    .reco-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .reco-main {
+      background: linear-gradient(145deg, var(--surface-dark) 0%, var(--surface-alt) 100%);
+      border-radius: var(--radius);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .reco-main::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      opacity: 0.1;
+    }
+
+    .reco-main .section-label { margin-bottom: 20px; }
+
+    .reco-main h2 {
+      color: var(--text-on-dark);
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .reco-main h2 span { color: var(--accent); }
+
+    .reco-main > p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .reco-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+
+    .reco-points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: rgba(240, 247, 250, 0.85);
+      font-size: 0.88rem;
+    }
+
+    .reco-points .reco-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    .reco-side {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .reco-side-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+      flex: 1;
+    }
+
+    .reco-side-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reco-side-card p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .no-reco-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .no-reco-list li {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      padding-left: 18px;
+      position: relative;
+    }
+
+    .no-reco-list li::before {
+      content: '✕';
+      position: absolute;
+      left: 0;
+      color: var(--danger);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* ── FOOTER ────────────────────────────────────── */
+    .footer {
+      background: var(--surface-dark);
+      padding: 32px 0;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .footer p {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .icon.icon-danger, .icon.icon-accent{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ── Animations ────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    .animate-on-scroll.visible {
+      animation: fadeUp 0.6s ease forwards;
+    }
+
+    /* stagger */
+    .delay-1 { animation-delay: 0.1s !important; }
+    .delay-2 { animation-delay: 0.2s !important; }
+    .delay-3 { animation-delay: 0.3s !important; }
+    .delay-4 { animation-delay: 0.4s !important; }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 768px) {
+      section { padding: 48px 0; }
+
+      .situation-grid,
+      .options-grid,
+      .alt-grid,
+      .reco-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero { padding: 56px 0 48px; }
+      .hero-meta { gap: 20px; }
+
+      .nav-dots { display: none; }
+
+      .option-metrics {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav dots -->
+  <nav class="nav-dots" aria-label="Navegación de secciones">
+    <button class="nav-dot active" data-label="Inicio" onclick="scrollToSection('hero')"></button>
+    <button class="nav-dot" data-label="Situacion" onclick="scrollToSection('situacion')"></button>
+    <button class="nav-dot" data-label="Opciones" onclick="scrollToSection('opciones')"></button>
+    <button class="nav-dot" data-label="Alternativas" onclick="scrollToSection('alternativas')"></button>
+    <button class="nav-dot" data-label="Comparativa" onclick="scrollToSection('comparativa')"></button>
+    <button class="nav-dot" data-label="Recomendacion" onclick="scrollToSection('recomendacion')"></button>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <header class="hero" id="hero">
+    <div class="container hero-content">
+      <div class="hero-badge">Propuesta comercial</div>
+      <h1>El Rey <span>Mayorista</span></h1>
+      <p class="hero-subtitle">Plataforma de venta online con lógica mayorista — Análisis de opciones para la implementación del sistema de descuentos por volumen.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="label">Fecha</span>
+          <span class="value">Abril 2025</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="label">Plan actual</span>
+          <span class="value">Shopify Basic ($39/mo)</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="label">Estado</span>
+          <span class="value">En evaluación</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ SITUACION ACTUAL ═══ -->
+  <section class="situation" id="situacion">
+    <div class="container">
+      <div class="section-label"><span class="dot"></span> Situación actual</div>
+      <h2>Qué se desarrolló y dónde estamos</h2>
+
+      <div class="situation-grid">
+        <!-- Funciona -->
+        <div class="sit-card animate-on-scroll">
+          <h3><span class="icon icon-success">&#10003;</span> Funciona en plan Basic</h3>
+          <ul class="checklist">
+            <li><span class="check check-ok">&#10003;</span> Builder visual de páginas (bento-grid) integrado al editor de Shopify</li>
+            <li><span class="check check-ok">&#10003;</span> Bloques de contenido: texto, imagen, botón, slider, carrusel</li>
+            <li><span class="check check-ok">&#10003;</span> Tarjetas de producto con formato mayorista</li>
+            <li><span class="check check-ok">&#10003;</span> Spinner de cantidad y compra rápida sin recarga</li>
+            <li><span class="check check-ok">&#10003;</span> Metafields de producto (bulto, contenido, tiers)</li>
+            <li><span class="check check-ok">&#10003;</span> Contact gate: registro + sincronización con Google Sheets</li>
+            <li><span class="check check-ok">&#10003;</span> Visualización de descuentos por tier (solo visual)</li>
+          </ul>
+        </div>
+
+        <!-- No funciona -->
+        <div class="sit-card animate-on-scroll delay-1">
+          <h3><span class="icon icon-danger">&#10007;</span> No funciona en plan Basic</h3>
+          <ul class="checklist">
+            <li>
+              <span class="check check-fail">&#10007;</span>
+              <span><strong>Aplicación real de descuentos en checkout</strong> — Los descuentos se muestran visualmente pero no se aplican al precio final</span>
+            </li>
+          </ul>
+
+          <div class="problem-callout">
+            <p><strong>El problema:</strong> La app de descuentos usa <strong>Shopify Functions</strong>, una tecnología que requiere mínimo el plan "Shopify" ($105/mo). En el plan Basic, la función nunca se ejecuta y el cliente paga precio completo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ OPCIONES SHOPIFY ═══ -->
+  <section class="options" id="opciones">
+    <div class="container">
+      <div class="section-label"><span class="dot"></span> Opciones en Shopify</div>
+      <h2>Caminos posibles sin cambiar de plataforma</h2>
+
+      <div class="options-grid">
+
+        <!-- Opción A -->
+        <div class="option-card recommended animate-on-scroll">
+          <div class="option-header">
+            <div class="option-letter letter-a">A</div>
+            <div class="option-header-text">
+              <h3>Upgrade al plan Shopify</h3>
+              <p>Sin cambios de código. Todo funciona inmediato.</p>
+            </div>
+          </div>
+          <div class="option-body">
+            <div class="option-metrics">
+              <div class="metric">
+                <div class="metric-label">Costo adicional</div>
+                <div class="metric-value cost">+$66/mes</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Implementación</div>
+                <div class="metric-value time">Inmediato</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Precisión descuentos</div>
+                <div class="metric-value">Total</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Trazabilidad</div>
+                <div class="metric-value">Completa</div>
+              </div>
+            </div>
+            <div class="option-pros">
+              <h4>Ventajas</h4>
+              <ul class="mini-list">
+                <li>Cero desarrollo adicional</li>
+                <li>100% del trabajo realizado se aprovecha</li>
+                <li>Acceso a Shopify Flow (automatizaciones)</li>
+                <li>Reportes avanzados de ventas</li>
+              </ul>
+            </div>
+            <div class="option-cons">
+              <h4>Limitaciones</h4>
+              <ul class="mini-list">
+                <li>Costo mensual recurrente más alto</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opción B -->
+        <div class="option-card animate-on-scroll delay-1">
+          <div class="option-header">
+            <div class="option-letter letter-b">B</div>
+            <div class="option-header-text">
+              <h3>Draft Orders API</h3>
+              <p>Servidor intermedio que aplica descuentos en órdenes borrador.</p>
+            </div>
+          </div>
+          <div class="option-body">
+            <div class="option-metrics">
+              <div class="metric">
+                <div class="metric-label">Costo adicional</div>
+                <div class="metric-value cost">$5-10/mes (hosting)</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Implementación</div>
+                <div class="metric-value warn">2-3 semanas</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Precisión descuentos</div>
+                <div class="metric-value">Total</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Trazabilidad</div>
+                <div class="metric-value warn">Parcial</div>
+              </div>
+            </div>
+            <div class="option-pros">
+              <h4>Ventajas</h4>
+              <ul class="mini-list">
+                <li>No requiere upgrade de plan</li>
+                <li>Precisión total por producto y tier</li>
+                <li>Control completo de la lógica</li>
+              </ul>
+            </div>
+            <div class="option-cons">
+              <h4>Limitaciones</h4>
+              <ul class="mini-list">
+                <li>Requiere servidor siempre activo</li>
+                <li>Carrito abandonado se comporta diferente</li>
+                <li>Mayor costo de mantenimiento</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opción C -->
+        <div class="option-card animate-on-scroll delay-2">
+          <div class="option-header">
+            <div class="option-letter letter-c">C</div>
+            <div class="option-header-text">
+              <h3>Códigos de descuento auto-aplicados</h3>
+              <p>Códigos por tier aplicados automáticamente vía JS.</p>
+            </div>
+          </div>
+          <div class="option-body">
+            <div class="option-metrics">
+              <div class="metric">
+                <div class="metric-label">Costo adicional</div>
+                <div class="metric-value cost">$0</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Implementación</div>
+                <div class="metric-value warn">1-2 semanas</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Precisión descuentos</div>
+                <div class="metric-value warn">Parcial</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Trazabilidad</div>
+                <div class="metric-value">Completa</div>
+              </div>
+            </div>
+            <div class="option-pros">
+              <h4>Ventajas</h4>
+              <ul class="mini-list">
+                <li>Sin costo adicional</li>
+                <li>Implementación rápida</li>
+                <li>Checkout estándar de Shopify</li>
+              </ul>
+            </div>
+            <div class="option-cons">
+              <h4>Limitaciones</h4>
+              <ul class="mini-list">
+                <li>Solo un descuento por orden</li>
+                <li>No puede aplicar distinto % por producto</li>
+                <li>Los códigos pueden filtrarse</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opción D -->
+        <div class="option-card animate-on-scroll delay-3">
+          <div class="option-header">
+            <div class="option-letter letter-d">D</div>
+            <div class="option-header-text">
+              <h3>App de terceros</h3>
+              <p>Aplicación del App Store especializada en descuentos por volumen.</p>
+            </div>
+          </div>
+          <div class="option-body">
+            <div class="option-metrics">
+              <div class="metric">
+                <div class="metric-label">Costo adicional</div>
+                <div class="metric-value cost">$15-40/mes</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Implementación</div>
+                <div class="metric-value time">1-3 días</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Precisión descuentos</div>
+                <div class="metric-value warn">Variable</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Trazabilidad</div>
+                <div class="metric-value">Completa</div>
+              </div>
+            </div>
+            <div class="option-pros">
+              <h4>Ventajas</h4>
+              <ul class="mini-list">
+                <li>Implementación muy rápida</li>
+                <li>Mantenimiento del proveedor</li>
+                <li>Panel de administración intuitivo</li>
+              </ul>
+            </div>
+            <div class="option-cons">
+              <h4>Limitaciones</h4>
+              <ul class="mini-list">
+                <li>Menor control sobre lógica de descuentos</li>
+                <li>Posibles conflictos con el tema custom</li>
+                <li>Dependencia de un tercero</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ALTERNATIVAS ═══ -->
+  <section class="alternatives" id="alternativas">
+    <div class="container">
+      <div class="section-label"><span class="dot"></span> Alternativas de plataforma</div>
+      <h2>Opciones fuera de Shopify</h2>
+
+      <div class="alt-grid">
+        <!-- WooCommerce -->
+        <div class="alt-card animate-on-scroll">
+          <div class="alt-card-header">
+            <div class="alt-icon woo">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 3h18v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V3z" stroke="white" stroke-width="2"/><path d="M7 21l5-3 5 3" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="7.5" cy="10" r="1.5" fill="white"/><circle cx="16.5" cy="10" r="1.5" fill="white"/><path d="M9 13c0 0 1.5 1.5 3 1.5s3-1.5 3-1.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <h3>WooCommerce (WordPress)</h3>
+              <p>E-commerce open source — máxima flexibilidad</p>
+            </div>
+          </div>
+
+          <div class="option-metrics">
+            <div class="metric">
+              <div class="metric-label">Plataforma</div>
+              <div class="metric-value cost">$0 (open source)</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Hosting</div>
+              <div class="metric-value">$10-30/mes</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Implementación</div>
+              <div class="metric-value warn">4-6 semanas</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Trazabilidad</div>
+              <div class="metric-value">Completa</div>
+            </div>
+          </div>
+
+          <div class="option-pros">
+            <h4>Ventajas</h4>
+            <ul class="mini-list">
+              <li>Sin costos de plataforma (solo hosting)</li>
+              <li>Plugins gratuitos de descuento por volumen</li>
+              <li>Ecosistema enorme de plugins y extensiones</li>
+              <li>Control total del código y los datos</li>
+              <li>Sin restricciones de funcionalidades por plan</li>
+            </ul>
+          </div>
+          <div class="option-cons">
+            <h4>Limitaciones</h4>
+            <ul class="mini-list">
+              <li>Requiere migración completa</li>
+              <li>Mantenimiento técnico periódico</li>
+              <li>Responsabilidad del hosting y seguridad</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Custom -->
+        <div class="alt-card animate-on-scroll delay-1">
+          <div class="alt-card-header">
+            <div class="alt-icon custom">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 3l-5 9h5l-1 9 10-13h-6l4-5H8z" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h3>Desarrollo a medida</h3>
+              <p>Node.js / React — control absoluto</p>
+            </div>
+          </div>
+
+          <div class="option-metrics">
+            <div class="metric">
+              <div class="metric-label">Plataforma</div>
+              <div class="metric-value cost">$0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Hosting</div>
+              <div class="metric-value">$10-25/mes</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Implementación</div>
+              <div class="metric-value warn">8-12 semanas</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Trazabilidad</div>
+              <div class="metric-value warn">Custom</div>
+            </div>
+          </div>
+
+          <div class="option-pros">
+            <h4>Ventajas</h4>
+            <ul class="mini-list">
+              <li>Control absoluto sobre todo el sistema</li>
+              <li>Lógica de descuentos sin limitaciones</li>
+              <li>Integración con ERPs y sistemas internos</li>
+              <li>Propiedad total del código y datos</li>
+            </ul>
+          </div>
+          <div class="option-cons">
+            <h4>Limitaciones</h4>
+            <ul class="mini-list">
+              <li>Mayor inversión inicial de desarrollo</li>
+              <li>Mantenimiento técnico continuo</li>
+              <li>Sin herramientas "out of the box"</li>
+              <li>Trazabilidad se construye desde cero</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ COMPARATIVA ═══ -->
+  <section class="compare" id="comparativa">
+    <div class="container">
+      <div class="section-label" style="background: rgba(0,180,216,0.12); color: var(--accent-light);"><span class="dot"></span> Comparativa</div>
+      <h2>Todas las opciones de un vistazo</h2>
+
+      <div class="compare-table-wrap animate-on-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="highlight-col">A: Upgrade</th>
+              <th>B: Draft Orders</th>
+              <th>C: Códigos</th>
+              <th>D: App 3ros</th>
+              <th>E: WooCommerce</th>
+              <th>F: A medida</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Costo mensual</td>
+              <td class="highlight-col">$105/mo</td>
+              <td>$44-49/mo</td>
+              <td>$39/mo</td>
+              <td>$54-79/mo</td>
+              <td>$10-30/mo</td>
+              <td>$10-25/mo</td>
+            </tr>
+            <tr>
+              <td>Inversión inicial</td>
+              <td class="highlight-col"><span class="pill-good">$0</span></td>
+              <td><span class="pill-mid">Media</span></td>
+              <td><span class="pill-good">Baja</span></td>
+              <td><span class="pill-good">Baja</span></td>
+              <td><span class="pill-mid">Alta</span></td>
+              <td><span class="pill-bad">Muy alta</span></td>
+            </tr>
+            <tr>
+              <td>Tiempo</td>
+              <td class="highlight-col"><span class="pill-good">Inmediato</span></td>
+              <td><span class="pill-mid">2-3 sem</span></td>
+              <td><span class="pill-mid">1-2 sem</span></td>
+              <td><span class="pill-good">1-3 días</span></td>
+              <td><span class="pill-bad">4-6 sem</span></td>
+              <td><span class="pill-bad">8-12 sem</span></td>
+            </tr>
+            <tr>
+              <td>Precisión descuentos</td>
+              <td class="highlight-col"><span class="pill-good">Total</span></td>
+              <td><span class="pill-good">Total</span></td>
+              <td><span class="pill-bad">Parcial</span></td>
+              <td><span class="pill-mid">Variable</span></td>
+              <td><span class="pill-good">Total</span></td>
+              <td><span class="pill-good">Total</span></td>
+            </tr>
+            <tr>
+              <td>Trazabilidad</td>
+              <td class="highlight-col"><span class="pill-good">Completa</span></td>
+              <td><span class="pill-mid">Parcial</span></td>
+              <td><span class="pill-good">Completa</span></td>
+              <td><span class="pill-good">Completa</span></td>
+              <td><span class="pill-good">Completa</span></td>
+              <td><span class="pill-mid">Custom</span></td>
+            </tr>
+            <tr>
+              <td>Mantenimiento</td>
+              <td class="highlight-col"><span class="pill-good">Bajo</span></td>
+              <td><span class="pill-bad">Alto</span></td>
+              <td><span class="pill-good">Bajo</span></td>
+              <td><span class="pill-good">Bajo</span></td>
+              <td><span class="pill-mid">Medio</span></td>
+              <td><span class="pill-bad">Alto</span></td>
+            </tr>
+            <tr>
+              <td>Riesgo técnico</td>
+              <td class="highlight-col"><span class="pill-good">Nulo</span></td>
+              <td><span class="pill-mid">Medio</span></td>
+              <td><span class="pill-good">Bajo</span></td>
+              <td><span class="pill-good">Bajo</span></td>
+              <td><span class="pill-good">Bajo</span></td>
+              <td><span class="pill-good">Bajo</span></td>
+            </tr>
+            <tr>
+              <td>Escalabilidad</td>
+              <td class="highlight-col"><span class="pill-good">Alta</span></td>
+              <td><span class="pill-mid">Media</span></td>
+              <td><span class="pill-bad">Baja</span></td>
+              <td><span class="pill-mid">Media</span></td>
+              <td><span class="pill-good">Alta</span></td>
+              <td><span class="pill-good">Alta</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RECOMENDACION ═══ -->
+  <section class="recommendation" id="recomendacion">
+    <div class="container">
+      <div class="reco-grid">
+        <div class="reco-main animate-on-scroll">
+          <div class="section-label" style="background: rgba(0,180,216,0.12); color: var(--accent-light);"><span class="dot"></span> Nuestra recomendación</div>
+          <h2>Opción A — <span>Upgrade al plan Shopify</span></h2>
+          <p>Es la solución más eficiente en relación costo-beneficio para el corto plazo:</p>
+          <ul class="reco-points">
+            <li>
+              <span class="reco-icon">$</span>
+              <span><strong>+$66 USD/mes</strong> es un costo menor comparado con el desarrollo ya invertido y el valor que genera la lógica mayorista completa</span>
+            </li>
+            <li>
+              <span class="reco-icon">&#9889;</span>
+              <span><strong>Cero tiempo de implementación</strong> — todo funciona inmediatamente al cambiar el plan</span>
+            </li>
+            <li>
+              <span class="reco-icon">&#10003;</span>
+              <span>Se aprovecha el <strong>100% del desarrollo ya realizado</strong>: builder visual, lógica de descuentos, contact gate y app</span>
+            </li>
+            <li>
+              <span class="reco-icon">&#9881;</span>
+              <span>Incluye <strong>Shopify Flow</strong> para futuras automatizaciones (emails, etiquetas, notificaciones)</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="reco-side">
+          <div class="reco-side-card animate-on-scroll delay-1">
+            <h3><span class="icon icon-accent" style="width:24px;height:24px;font-size:0.75rem;">&#9733;</span> A mediano plazo</h3>
+            <p>Si el objetivo es <strong>reducir costos recurrentes</strong> y tener mayor control, <strong>WooCommerce</strong> es la mejor alternativa: equilibrio entre funcionalidad, costo y autonomía. <strong>Desarrollo a medida</strong> solo se justifica si hay necesidades muy específicas o integración con sistemas internos.</p>
+          </div>
+
+          <div class="reco-side-card animate-on-scroll delay-2">
+            <h3><span class="icon icon-danger" style="width:24px;height:24px;font-size:0.7rem;">&#10007;</span> No recomendadas</h3>
+            <ul class="no-reco-list">
+              <li><strong>Códigos auto-aplicados</strong> — un solo descuento por orden es incompatible con tiers diferentes por producto</li>
+              <li><strong>Draft Orders</strong> — el costo de desarrollo y mantenimiento supera los $66/mes del upgrade</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="container">
+      <p>Sama Desing &mdash; Abril 2026</p>
+    </div>
+  </footer>
+
+  <script>
+    /* ── Scroll animations ──────────────────────────── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+    /* ── Nav dots active state ──────────────────────── */
+    const sections = ['hero', 'situacion', 'opciones', 'alternativas', 'comparativa', 'recomendacion'];
+    const dots = document.querySelectorAll('.nav-dot');
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const idx = sections.indexOf(entry.target.id);
+          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        }
+      });
+    }, { threshold: 0.3 });
+
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) sectionObserver.observe(el);
+    });
+
+    function scrollToSection(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
