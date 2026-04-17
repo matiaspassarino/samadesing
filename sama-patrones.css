@@ -1,0 +1,312 @@
+/* ============================================================
+   SAMA DESIGN — SISTEMA DE PATRONES
+   Retro-futurista · Scanlines + Circuitos
+   ============================================================ */
+
+/* --- Variables de marca --- */
+:root {
+  --sama-cream: #F5E6CC;
+  --sama-black: #1D1D1B;
+  --sama-slate: #607189;
+  --sama-orange: #E8601C;
+  --sama-lime: #C1CB33;
+  --sama-navy: #283044;
+}
+
+
+/* ============================================================
+   CAPA 1: SCANLINES PURAS (sin puntos)
+   Uso: fondo sutil sobre cualquier color base.
+   Aplicar como pseudo-elemento ::after sobre el contenedor.
+   ============================================================ */
+
+/* --- Scanlines genérico (adaptar color con variables) --- */
+.sama-scanlines {
+  position: relative;
+}
+.sama-scanlines::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.015) 2px,
+    rgba(0, 0, 0, 0.015) 4px
+  );
+}
+
+/* Variante: scanlines sobre fondo oscuro (lima sutil) */
+.sama-scanlines--dark::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(193, 203, 51, 0.03) 2px,
+    rgba(193, 203, 51, 0.03) 4px
+  );
+}
+
+/* Variante: scanlines sobre crema (negro sutil) */
+.sama-scanlines--cream::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(29, 29, 27, 0.015) 2px,
+    rgba(29, 29, 27, 0.015) 4px
+  );
+}
+
+/* Variante: scanlines sobre naranja (negro sutil) */
+.sama-scanlines--orange::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(29, 29, 27, 0.025) 2px,
+    rgba(29, 29, 27, 0.025) 4px
+  );
+}
+
+/* Variante: scanlines sobre navy (crema sutil) */
+.sama-scanlines--navy::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(245, 230, 204, 0.025) 2px,
+    rgba(245, 230, 204, 0.025) 4px
+  );
+}
+
+
+/* ============================================================
+   CAPA 2: NOISE (granulado de película)
+   Uso: capa global fija sobre toda la página.
+   Agregar un <div class="sama-noise"></div> al final del body.
+   ============================================================ */
+
+.sama-noise {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 998;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+
+/* ============================================================
+   CAPA 3: CIRCUITOS (via SVG inline como background)
+   Uso: secciones hero, portfolio, dark con impacto.
+   El SVG genera una grilla de 32px con nodos y conexiones.
+   ============================================================ */
+
+.sama-circuits {
+  position: relative;
+}
+.sama-circuits::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg width='96' height='96' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='32' x2='96' y2='32' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='0' y1='64' x2='96' y2='64' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='32' y1='0' x2='32' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='64' y1='0' x2='64' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Ccircle cx='32' cy='32' r='2.5' fill='%23C1CB33'/%3E%3Cline x1='32' y1='32' x2='64' y2='32' stroke='%23C1CB33' stroke-width='1'/%3E%3Ccircle cx='64' cy='64' r='2.5' fill='%23C1CB33'/%3E%3Cline x1='64' y1='64' x2='64' y2='96' stroke='%23C1CB33' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 96px 96px;
+}
+
+/* Variante: circuitos sobre navy */
+.sama-circuits--navy::before {
+  opacity: 0.15;
+  background-image: url("data:image/svg+xml,%3Csvg width='96' height='96' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='32' x2='96' y2='32' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='0' y1='64' x2='96' y2='64' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='32' y1='0' x2='32' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='64' y1='0' x2='64' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Ccircle cx='32' cy='32' r='2.5' fill='%23C1CB33'/%3E%3Cline x1='32' y1='32' x2='64' y2='32' stroke='%23C1CB33' stroke-width='1'/%3E%3Ccircle cx='64' cy='64' r='2.5' fill='%23C1CB33'/%3E%3Cline x1='64' y1='64' x2='64' y2='96' stroke='%23C1CB33' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* Variante: circuitos naranja sobre dark */
+.sama-circuits--orange::before {
+  opacity: 0.10;
+  background-image: url("data:image/svg+xml,%3Csvg width='96' height='96' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='32' x2='96' y2='32' stroke='%23E8601C' stroke-width='0.5'/%3E%3Cline x1='0' y1='64' x2='96' y2='64' stroke='%23E8601C' stroke-width='0.5'/%3E%3Cline x1='32' y1='0' x2='32' y2='96' stroke='%23E8601C' stroke-width='0.5'/%3E%3Cline x1='64' y1='0' x2='64' y2='96' stroke='%23E8601C' stroke-width='0.5'/%3E%3Ccircle cx='32' cy='32' r='2.5' fill='%23E8601C'/%3E%3Cline x1='32' y1='32' x2='64' y2='32' stroke='%23E8601C' stroke-width='1'/%3E%3Ccircle cx='64' cy='64' r='2.5' fill='%23E8601C'/%3E%3Cline x1='64' y1='64' x2='64' y2='96' stroke='%23E8601C' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+
+/* ============================================================
+   COMBO: CIRCUITOS + SCANLINES
+   Uso: máximo impacto retro-futurista.
+   Combinar ambas clases: class="sama-circuits sama-scanlines--dark"
+   ============================================================ */
+
+/* El contenedor necesita z-index en su contenido */
+.sama-circuits > *,
+.sama-scanlines > * {
+  position: relative;
+  z-index: 2;
+}
+
+
+/* ============================================================
+   SECCIONES PRE-ARMADAS
+   Uso directo: aplicar la clase al <section> o <div>.
+   ============================================================ */
+
+/* Hero / Portfolio: dark frío + circuitos + scanlines */
+.sama-section--hero {
+  background: var(--sama-black);
+  color: var(--sama-cream);
+  position: relative;
+}
+.sama-section--hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg width='96' height='96' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='32' x2='96' y2='32' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='0' y1='64' x2='96' y2='64' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='32' y1='0' x2='32' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='64' y1='0' x2='64' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Ccircle cx='32' cy='32' r='2.5' fill='%23C1CB33'/%3E%3Cline x1='32' y1='32' x2='64' y2='32' stroke='%23C1CB33' stroke-width='1'/%3E%3Ccircle cx='64' cy='64' r='2.5' fill='%23C1CB33'/%3E%3Cline x1='64' y1='64' x2='64' y2='96' stroke='%23C1CB33' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 96px 96px;
+}
+.sama-section--hero::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(193, 203, 51, 0.03) 2px,
+    rgba(193, 203, 51, 0.03) 4px
+  );
+}
+.sama-section--hero > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Contenido: crema + scanlines */
+.sama-section--content {
+  background: var(--sama-cream);
+  color: var(--sama-black);
+  position: relative;
+}
+.sama-section--content::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(29, 29, 27, 0.015) 2px,
+    rgba(29, 29, 27, 0.015) 4px
+  );
+}
+.sama-section--content > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Bloque de atención: naranja + scanlines */
+.sama-section--attention-orange {
+  background: var(--sama-orange);
+  color: var(--sama-black);
+  position: relative;
+}
+.sama-section--attention-orange::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(29, 29, 27, 0.025) 2px,
+    rgba(29, 29, 27, 0.025) 4px
+  );
+}
+.sama-section--attention-orange > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Bloque de atención: navy + scanlines */
+.sama-section--attention-navy {
+  background: var(--sama-navy);
+  color: var(--sama-cream);
+  position: relative;
+}
+.sama-section--attention-navy::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(245, 230, 204, 0.025) 2px,
+    rgba(245, 230, 204, 0.025) 4px
+  );
+}
+.sama-section--attention-navy > * {
+  position: relative;
+  z-index: 2;
+}
+
+
+/* ============================================================
+   EJEMPLO DE USO EN HTML:
+   ============================================================
+
+   <body>
+     <section class="sama-section--hero">
+       <div class="container">
+         <h1>Sama Design</h1>
+       </div>
+     </section>
+
+     <section class="sama-section--content">
+       <div class="container">
+         <h2>Servicios</h2>
+       </div>
+     </section>
+
+     <section class="sama-section--attention-orange">
+       <div class="container">
+         <h2>Escribime hoy</h2>
+       </div>
+     </section>
+
+     <section class="sama-section--hero">
+       <div class="container">
+         <h2>Portfolio</h2>
+       </div>
+     </section>
+
+     <section class="sama-section--content">
+       <div class="container">
+         <h2>Sobre mí</h2>
+       </div>
+     </section>
+
+     <section class="sama-section--attention-navy">
+       <div class="container">
+         <h2>¿Tenés un proyecto?</h2>
+       </div>
+     </section>
+
+     <div class="sama-noise"></div>
+   </body>
+
+   ============================================================ */
