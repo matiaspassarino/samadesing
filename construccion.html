@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sama Desing — Sitio en construcción</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="sama-patrones.css">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--sama-black);
+      color: var(--sama-lime);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scanlines CRT a pantalla completa */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(193, 203, 51, 0.05) 2px,
+        rgba(193, 203, 51, 0.05) 4px
+      );
+    }
+
+    /* Viñeta sutil para reforzar el look CRT */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 55%,
+        rgba(0, 0, 0, 0.55) 100%
+      );
+    }
+
+    main {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem;
+      position: relative;
+      z-index: 3;
+      min-height: 0;
+    }
+
+    .logo {
+      width: clamp(110px, 18vw, 180px);
+      height: auto;
+      margin-bottom: 1.8rem;
+      filter: drop-shadow(0 0 18px rgba(193, 203, 51, 0.35));
+      animation: flicker 4.5s infinite;
+    }
+
+    .status-tag {
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 500;
+      font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--sama-lime);
+      opacity: 0.75;
+      border: 1px solid rgba(193, 203, 51, 0.35);
+      padding: 0.45rem 1.1rem;
+      border-radius: 2px;
+      margin-bottom: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .status-tag .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--sama-lime);
+      box-shadow: 0 0 10px var(--sama-lime);
+      animation: blink 1.4s infinite;
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.9rem, 5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1.05;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    h1 .accent {
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      color: var(--sama-cream);
+      font-size: 0.45em;
+      letter-spacing: 0.4em;
+      margin-top: 0.6rem;
+      opacity: 0.8;
+    }
+
+    .lead {
+      font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+      max-width: 560px;
+      line-height: 1.6;
+      color: rgba(245, 230, 204, 0.82);
+      margin-bottom: 2rem;
+    }
+
+    .lead strong {
+      color: var(--sama-lime);
+      font-weight: 700;
+    }
+
+    .contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      justify-content: center;
+    }
+
+    .contact a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.8rem 1.4rem;
+      border: 1.5px solid var(--sama-lime);
+      color: var(--sama-lime);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: clamp(0.82rem, 1.1vw, 0.92rem);
+      letter-spacing: 0.03em;
+      font-family: 'IBM Plex Sans', sans-serif;
+      transition: all 0.25s ease;
+      background: rgba(193, 203, 51, 0.04);
+    }
+
+    .contact a:hover {
+      background: var(--sama-lime);
+      color: var(--sama-black);
+      box-shadow: 0 0 24px rgba(193, 203, 51, 0.45);
+    }
+
+    .contact a i {
+      font-size: 1.1em;
+    }
+
+    footer {
+      flex: 0 0 auto;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 400;
+      font-size: clamp(0.65rem, 0.85vw, 0.78rem);
+      color: rgba(245, 230, 204, 0.5);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 3;
+      border-top: 1px solid rgba(193, 203, 51, 0.15);
+    }
+
+    footer .brand {
+      color: var(--sama-lime);
+      font-weight: 700;
+    }
+
+    @keyframes flicker {
+      0%, 97%, 100% { opacity: 1; }
+      97.5% { opacity: 0.75; }
+      98% { opacity: 1; }
+      98.5% { opacity: 0.85; }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 1.5rem 1rem; }
+      .contact { flex-direction: column; width: 100%; max-width: 300px; }
+      .contact a { justify-content: center; }
+    }
+
+    @media (max-height: 600px) {
+      .logo { margin-bottom: 1rem; width: clamp(80px, 14vw, 130px); }
+      .status-tag { margin-bottom: 0.8rem; }
+      .lead { margin-bottom: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <img src="LOGO VERDE.png" alt="Sama Desing" class="logo">
+
+    <span class="status-tag">
+      <span class="dot"></span> System loading · 01
+    </span>
+
+    <h1>
+      Sitio en construcción
+      <span class="accent">&lt; work in progress /&gt;</span>
+    </h1>
+
+    <p class="lead">
+      Estoy puliendo cada pixel para presentarte la nueva experiencia <strong>Sama Desing</strong>.
+      Mientras tanto, si querés ver mi portfolio o charlar sobre un proyecto, contactame.
+    </p>
+
+    <div class="contact">
+      <a href="mailto:matiaspassa@hotmail.com">
+        <i class="fas fa-envelope"></i>
+        matiaspassa@hotmail.com
+      </a>
+      <a href="https://wa.me/543513856836" target="_blank" rel="noopener">
+        <i class="fab fa-whatsapp"></i>
+        +54 351 385-6836
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 <span class="brand">Sama Desing</span> — Todos los derechos reservados
+  </footer>
+
+</body>
+</html>

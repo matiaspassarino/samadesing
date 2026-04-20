@@ -1,0 +1,21 @@
+node_modules
+dist
+.vite
+.DS_Store
+*.log
+
+# Claude Design handoff bundle (local reference only)
+project/
+
+# Assets de trabajo sueltos en raíz
+IBM_Plex_Sans,Space_Grotesk/
+IBM_Plex_Sans,Space_Grotesk.zip
+3d-render-yellow-vintage-television-600nw-2294131535.webp
+patrones de fondo.txt
+visual.jpg
+ejemplo.png
+"LOGO VERDE.png"
+"logo texto.png"
+
+# Netlify local
+.netlify
