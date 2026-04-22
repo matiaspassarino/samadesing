@@ -45,10 +45,13 @@ export default function Branding() {
 
           <div
             className="carousel-track"
-            style={{ transform: `translateX(-${index * 100}%)` }}
+            style={{ transform: `translateX(calc(-${index} * (100% + 16px) / var(--cols, 3)))` }}
           >
-            {slides.map((s) => (
-              <div key={s.src} className="carousel-slide">
+            {slides.map((s, i) => (
+              <div
+                key={s.src}
+                className={`carousel-slide${i === index ? ' is-current' : ''}`}
+              >
                 <img src={s.src} alt={s.alt} loading="lazy" />
               </div>
             ))}

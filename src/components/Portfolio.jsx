@@ -43,6 +43,15 @@ const projects = [
     title: 'Grow2On',
     description: 'Conector multicanal ERP-ecommerce. Ahorrá 80% en tiempo de gestión de tu negocio online.',
     tags: ['WordPress', 'SaaS', 'Integraciones']
+  },
+  {
+    url: 'https://emeingenieriasrl.com.ar/',
+    image: '/assets/screenshots/eme-desktop.png',
+    alt: 'EME Ingeniería',
+    category: 'WordPress · Diseño + Implementación',
+    title: 'EME Ingeniería',
+    description: 'Sitio institucional para estudio de ingeniería. Diseño visual completo e implementación en WordPress.',
+    tags: ['WordPress', 'Institucional', 'Ingeniería']
   }
 ]
 

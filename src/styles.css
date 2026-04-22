@@ -499,8 +499,9 @@ body::before {
 }
 
 .carousel {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
+  --cols: 3;
 }
 
 .carousel-frame {
@@ -508,8 +509,9 @@ body::before {
   border: 1px solid var(--border-lime);
   border-radius: 4px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(29, 29, 27, 0.6);
   box-shadow: 0 0 40px rgba(193, 203, 51, 0.06);
+  padding: 24px 24px 56px;
 }
 
 .carousel-frame::after {
@@ -543,23 +545,35 @@ body::before {
 
 .carousel-track {
   display: flex;
+  gap: 16px;
   transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
   will-change: transform;
 }
 
 .carousel-slide {
-  flex: 0 0 100%;
-  aspect-ratio: 16 / 10;
+  flex: 0 0 calc((100% - 16px * (var(--cols) - 1)) / var(--cols));
+  aspect-ratio: 4 / 5;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--black);
+  border: 1px solid rgba(193, 203, 51, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0.55;
+  transition: opacity 0.4s, border-color 0.4s, box-shadow 0.4s;
+}
+
+.carousel-slide.is-current {
+  opacity: 1;
+  border-color: rgba(193, 203, 51, 0.5);
+  box-shadow: 0 0 24px rgba(193, 203, 51, 0.12);
 }
 
 .carousel-slide img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -695,6 +709,7 @@ body::before {
   padding: 32px;
   border: 1px solid rgba(29, 29, 27, 0.1);
   background: #fff;
+  text-align: center;
   transition: background 0.2s;
   cursor: pointer;
 }
@@ -710,9 +725,10 @@ body::before {
 }
 
 .service-icon {
-  font-size: 22px;
-  margin-bottom: 14px;
+  font-size: 3rem;
+  margin: 1rem 0;
   color: var(--orange);
+  text-align: center;
   transition: color 0.2s;
 }
 
@@ -735,10 +751,25 @@ body::before {
 /* ===== Contact ===== */
 .section-contact {
   background: var(--navy);
-  padding: 100px 48px;
+  min-height: 80vh;
+  padding: 120px 48px 0;
   text-align: center;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.contact-avatar {
+  display: block;
+  width: clamp(220px, 28vw, 360px);
+  height: auto;
+  margin: 3rem auto 0;
+  filter: drop-shadow(0 0 30px rgba(193, 203, 51, 0.18));
+  position: relative;
+  z-index: 1;
 }
 
 .section-contact::after {
@@ -896,13 +927,19 @@ body::before {
 }
 
 /* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .carousel { --cols: 2; }
+}
+
 @media (max-width: 768px) {
   .nav { padding: 0 20px; }
   .nav-links { display: none; }
   .section-portfolio,
   .section-branding,
-  .section-services,
-  .section-contact { padding: 72px 20px; }
+  .section-services { padding: 72px 20px; }
+  .section-contact { padding: 90px 20px 0; }
+  .carousel { --cols: 1; }
+  .carousel-frame { padding: 16px 16px 48px; }
   .carousel-btn { width: 36px; height: 36px; }
   .carousel-btn-prev { left: 8px; }
   .carousel-btn-next { right: 8px; }

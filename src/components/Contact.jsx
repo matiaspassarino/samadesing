@@ -21,6 +21,7 @@ export default function Contact() {
           <i className="fab fa-whatsapp" /> +54 351 385-6836
         </a>
       </div>
+      <img className="contact-avatar" src="/assets/avatar-crema.png" alt="Matías Passarino" />
     </section>
   )
 }
