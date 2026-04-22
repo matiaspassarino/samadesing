@@ -8,13 +8,12 @@ export default function Hero() {
       </div>
 
       <h1>
-        Implementador<br />
-        e-commerce &amp;<br />
-        <em>desarrollador web</em>
+        Diseño, web<br />
+        &amp; <em>branding</em>
       </h1>
 
       <p className="hero-sub">
-        Más de 5 años implementando tiendas en Shopify, WooCommerce, Prestashop y Tiendanube — desde el prototipo hasta el go-live. Background en diseño gráfico que me permite entender el proyecto completo, no solo el código.
+        Profesional digital con más de 10 años de experiencia en diseño, desarrollo web, comunicación y branding. Especialista en implementar tiendas Ecommerce en distintas plataformas y personalización.
       </p>
 
       <div className="hero-mono">&lt; Córdoba, Argentina · Matías Passarino /&gt;</div>

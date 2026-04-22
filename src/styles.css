@@ -474,6 +474,173 @@ body::before {
   color: var(--cream-faint);
 }
 
+/* ===== Branding ===== */
+.section-branding {
+  padding: 100px 48px;
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--border-lime);
+}
+
+.section-branding::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg width='96' height='96' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='32' x2='96' y2='32' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='0' y1='64' x2='96' y2='64' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='32' y1='0' x2='32' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Cline x1='64' y1='0' x2='64' y2='96' stroke='%23C1CB33' stroke-width='0.5'/%3E%3Ccircle cx='32' cy='32' r='2.5' fill='%23C1CB33'/%3E%3Ccircle cx='64' cy='64' r='2.5' fill='%23C1CB33'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 96px 96px;
+}
+
+.section-branding > * {
+  position: relative;
+  z-index: 1;
+}
+
+.carousel {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.carousel-frame {
+  position: relative;
+  border: 1px solid var(--border-lime);
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: 0 0 40px rgba(193, 203, 51, 0.06);
+}
+
+.carousel-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(193, 203, 51, 0.03) 2px,
+    rgba(193, 203, 51, 0.03) 4px
+  );
+}
+
+.carousel-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--lime);
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.carousel-corner.tl { top: 8px; left: 8px; border-top: 1.5px solid; border-left: 1.5px solid; }
+.carousel-corner.tr { top: 8px; right: 8px; border-top: 1.5px solid; border-right: 1.5px solid; }
+.carousel-corner.bl { bottom: 8px; left: 8px; border-bottom: 1.5px solid; border-left: 1.5px solid; }
+.carousel-corner.br { bottom: 8px; right: 8px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+  will-change: transform;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--black);
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(29, 29, 27, 0.7);
+  border: 1.5px solid var(--border-lime);
+  border-radius: 2px;
+  color: var(--lime);
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.22s;
+  backdrop-filter: blur(4px);
+}
+
+.carousel-btn:hover {
+  background: var(--lime);
+  color: var(--black);
+  border-color: var(--lime);
+  box-shadow: 0 0 20px var(--lime-glow);
+}
+
+.carousel-btn-prev { left: 16px; }
+.carousel-btn-next { right: 16px; }
+
+.carousel-meta {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.carousel-counter {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--lime);
+  background: rgba(29, 29, 27, 0.75);
+  border: 1px solid var(--border-lime);
+  padding: 4px 10px;
+  border-radius: 2px;
+  backdrop-filter: blur(4px);
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.carousel-dot {
+  width: 28px;
+  height: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 1px;
+  background: rgba(245, 230, 204, 0.2);
+  cursor: pointer;
+  transition: background 0.22s, box-shadow 0.22s;
+}
+
+.carousel-dot:hover {
+  background: rgba(193, 203, 51, 0.5);
+}
+
+.carousel-dot.is-active {
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime-glow);
+}
+
 /* ===== Services ===== */
 .section-services {
   background: var(--cream);
@@ -733,8 +900,12 @@ body::before {
   .nav { padding: 0 20px; }
   .nav-links { display: none; }
   .section-portfolio,
+  .section-branding,
   .section-services,
   .section-contact { padding: 72px 20px; }
+  .carousel-btn { width: 36px; height: 36px; }
+  .carousel-btn-prev { left: 8px; }
+  .carousel-btn-next { right: 8px; }
   .footer {
     flex-direction: column;
     gap: 12px;

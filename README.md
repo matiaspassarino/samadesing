@@ -1,22 +1,71 @@
-# CODING AGENTS: READ THIS FIRST
+# Sama Desing — Portfolio
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+Portfolio personal de **Matías Passarino** (Sama Desing) — diseño, desarrollo web y branding.
+Córdoba, Argentina.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+Sitio en producción: [samadesing.ar](https://samadesing.ar)
 
-## What you should do — IMPORTANT
+## Stack
 
-**Find the primary design file under `sama-design-system/project/` and read it top to bottom.** Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+- React 18 + Vite 5
+- CSS vanilla con variables (paleta lime / cream / black / orange / navy)
+- Estética CRT retro-futurista: scanlines, vignette, film grain, flicker
+- Tipografías: IBM Plex Sans + Space Grotesk + Space Mono
+- Iconos: Font Awesome (via CDN en `index.html`)
+- Deploy: Netlify (push a `main` dispara build automático)
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Estructura
 
-## About the design files
+```
+src/
+├── App.jsx               # Composición de secciones
+├── main.jsx              # Entry point
+├── styles.css            # Estilos globales y por sección
+└── components/
+    ├── Nav.jsx           # Nav fijo con enlaces a secciones
+    ├── Hero.jsx          # Título, subtítulo, CTAs
+    ├── Portfolio.jsx     # Grid de proyectos (Shopify / WordPress)
+    ├── Branding.jsx      # Carrusel de piezas de identidad visual
+    ├── Services.jsx      # Grid de servicios
+    ├── Contact.jsx       # CTA de contacto
+    └── Footer.jsx
+public/assets/
+├── logo-verde.png
+├── logo-texto.png
+├── screenshots/          # Capturas de proyectos del portfolio
+└── branding/             # Imágenes del carrusel de branding
+pages/
+└── propuesta-el-rey-mayorista.html   # Landing de propuesta comercial
+```
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## Secciones
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+1. **Hero** — "Diseño, web & branding" + bio + CTAs.
+2. **Portfolio** — proyectos recientes (Poligiros, Ama Hogar, Martin Morris, Wuala, Grow2On).
+3. **Branding** — carrusel con piezas de identidad visual y diseño gráfico.
+4. **Servicios** — implementación e-commerce, desarrollo web, diseño gráfico, capacitación.
+5. **Contacto** — botones a WhatsApp / email.
 
-## Bundle contents
+## Desarrollo
 
-- `sama-design-system/README.md` — this file
-- `sama-design-system/project/` — the `Sama Design System` project files (HTML prototypes, assets, components)
+```bash
+npm install
+npm run dev       # localhost:5173
+npm run build     # genera dist/
+npm run preview   # sirve dist/
+```
+
+## Deploy
+
+Push a `main` en GitHub → Netlify ejecuta `npm run build` y publica `dist/` en `samadesing.ar`. Configuración en [netlify.toml](netlify.toml).
+
+## Paleta
+
+| Token     | Hex       | Uso                            |
+|-----------|-----------|--------------------------------|
+| `--black` | `#1d1d1b` | Fondo principal                |
+| `--cream` | `#f5e6cc` | Texto claro / fondo servicios  |
+| `--lime`  | `#c1cb33` | Acento primario, CTAs, glow    |
+| `--orange`| `#e8601c` | Acento secundario (servicios)  |
+| `--navy`  | `#283044` | Fondo sección contacto         |
+| `--slate` | `#607189` | Texto secundario               |

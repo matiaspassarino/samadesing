@@ -7,6 +7,7 @@ export default function Footer() {
       <nav>
         <a href="#inicio">Inicio</a>
         <a href="#portfolio">Portfolio</a>
+        <a href="#branding">Branding</a>
         <a href="#servicios">Servicios</a>
         <a href="#contacto">Contacto</a>
       </nav>
