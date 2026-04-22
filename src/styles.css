@@ -764,10 +764,12 @@ body::before {
 
 .contact-avatar {
   display: block;
-  width: clamp(220px, 28vw, 360px);
+  width: 150px;
   height: auto;
-  margin: 3rem auto 0;
-  filter: drop-shadow(0 0 30px rgba(193, 203, 51, 0.18));
+  margin-top: 6rem;
+  margin-left: auto;
+  margin-right: auto;
+  filter: drop-shadow(4px 6px 0 rgba(0, 0, 0, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
   position: relative;
   z-index: 1;
 }
