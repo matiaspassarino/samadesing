@@ -227,10 +227,10 @@ button, input, textarea {
 @media screen and (max-width: 767px) {
   .nav__menu {
     position: fixed;
-    top: -100%;
+    top: -150%;
     left: 0;
     width: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     padding-block: 4rem;
@@ -424,7 +424,13 @@ button, input, textarea {
   row-gap: 1.5rem;
   padding-top: 2rem;
   max-width: 768px; /* Constrain width for accordion readability */
-  margin: 0 auto;
+  margin-inline: 1.5rem;
+}
+
+@media screen and (min-width: 768px) {
+  .services__container {
+    margin-inline: auto;
+  }
 }
 
 .accordion__item {
@@ -527,6 +533,7 @@ button, input, textarea {
 .contact__item-data {
   font-size: var(--small-font-size);
   color: var(--text-color);
+  word-break: break-word;
 }
 
 .contact__button {
