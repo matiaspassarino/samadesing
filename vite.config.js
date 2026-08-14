@@ -8,7 +8,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './index.html',
-        estudioJuridico: './pages/estudio-juridico/index.html'
+        estudioJuridico: './pages/estudio-juridico/index.html',
+        industriasSur: './pages/industrias-sur/index.html'
       }
     }
   }

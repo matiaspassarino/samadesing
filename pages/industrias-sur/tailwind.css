@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  Limitamos el scope de base para que el Preflight de Tailwind
+  no rompa la app principal si llegara a cargarse globalmente.
+  (Como se carga por import en main.jsx, debería estar bien,
+   pero siempre es seguro tener en cuenta esto).
+*/
