@@ -4,25 +4,48 @@ import Auth from './components/Auth';
 import AdminView from './views/AdminView';
 import SupervisorView from './views/SupervisorView';
 import VendedorView from './views/VendedorView';
+import DevView from './views/DevView';
+import DevToolbar from './components/DevToolbar';
 import { Loader2, LogOut } from 'lucide-react';
 
 export default function App() {
   const [session, setSession] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(null); // Rol REAL en DB
+  const [simulatedRole, setSimulatedRole] = useState(null); // Rol a renderizar (Impersonación)
   const [loading, setLoading] = useState(true);
 
+  // Leer rol directo desde nuestra tabla perfiles, evitando depender de la metadata inyectada.
+  const loadRoleFromDB = async (uid) => {
+    const { data, error } = await supabase.from('perfiles').select('rol').eq('id', uid).single();
+    if (!error && data) {
+      setUserRole(data.rol);
+      setSimulatedRole(data.rol);
+    } else {
+      // Fallback a Vendedor por defecto si falla la lectura (aunque por trigger debería existir siempre)
+      setUserRole('Vendedor');
+      setSimulatedRole('Vendedor');
+    }
+  };
+
   useEffect(() => {
-    // Verificar sesión inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      setUserRole(session?.user?.user_metadata?.rol || 'Vendedor');
+      if (session?.user) {
+        await loadRoleFromDB(session.user.id);
+      }
       setLoading(false);
     });
 
-    // Escuchar cambios de sesión (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      setUserRole(session?.user?.user_metadata?.rol || 'Vendedor');
+      if (session?.user) {
+        setLoading(true);
+        await loadRoleFromDB(session.user.id);
+        setLoading(false);
+      } else {
+        setUserRole(null);
+        setSimulatedRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -45,35 +68,52 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 font-sans text-neutral-800">
+    <div className="min-h-screen bg-neutral-50 font-sans text-neutral-800 flex flex-col">
+      {/* Dev Impersonation Toolbar */}
+      {userRole === 'Dev' && (
+        <DevToolbar simulatedRole={simulatedRole} setSimulatedRole={setSimulatedRole} />
+      )}
+
       {/* Header Global */}
-      <header className="bg-white border-b border-neutral-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-neutral-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
             <h1 className="font-heading font-bold text-lg text-neutral-800">Industrias Sur CRM</h1>
-            <p className="text-xs text-neutral-500 font-medium">Conectado como: {session.user.email} <span className="bg-primary-50 text-primary-900 px-2 py-0.5 rounded ml-1">{userRole}</span></p>
+            <p className="text-xs text-neutral-500 font-medium mt-0.5">
+              {session.user.email} 
+              <span className={`px-2 py-0.5 rounded ml-2 font-bold ${
+                simulatedRole === 'Dev' ? 'bg-neutral-900 text-white' : 'bg-primary-50 text-primary-900'
+              }`}>
+                {simulatedRole}
+              </span>
+              {userRole === 'Dev' && simulatedRole !== 'Dev' && (
+                <span className="ml-2 text-danger opacity-80">(Impersonando)</span>
+              )}
+            </p>
           </div>
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-danger transition-colors"
+            className="flex items-center gap-2 text-sm text-neutral-500 hover:text-danger font-medium transition-colors bg-neutral-50 px-3 py-1.5 rounded-lg border border-transparent hover:border-danger/20"
           >
             <LogOut size={16} /> Salir
           </button>
         </div>
       </header>
 
-      {/* Renderizado condicional por Rol */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        {userRole === 'Administrador' && <AdminView />}
-        {userRole === 'Supervisor' && <SupervisorView />}
-        {userRole === 'Vendedor' && <VendedorView session={session} />}
-        {/* Fallback si el rol no coincide */}
-        {!['Administrador', 'Supervisor', 'Vendedor'].includes(userRole) && (
-          <div className="p-8 text-center text-danger bg-danger/10 rounded-xl">
+      {/* Renderizado condicional basado en el SIMULATED ROLE */}
+      <main className="max-w-6xl mx-auto px-4 py-6 w-full flex-1">
+        {simulatedRole === 'Dev' && <DevView />}
+        {simulatedRole === 'Administrador' && <AdminView />}
+        {simulatedRole === 'Supervisor' && <SupervisorView />}
+        {simulatedRole === 'Vendedor' && <VendedorView session={session} />}
+        
+        {/* Fallback */}
+        {!['Dev', 'Administrador', 'Supervisor', 'Vendedor'].includes(simulatedRole) && (
+          <div className="p-8 text-center text-danger bg-danger/10 rounded-xl font-medium border border-danger/20">
             Rol no reconocido. Contacta a soporte.
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
