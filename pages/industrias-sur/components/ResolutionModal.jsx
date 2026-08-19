@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, CheckCircle, PhoneCall, CalendarClock, ThumbsDown } from 'lucide-react';
 
 const OPTIONS = [
-  { id: 'exit', label: 'Contacto Exitoso', desc: 'Avanza a oportunidad', icon: CheckCircle, color: 'text-success', bgActive: 'bg-success/10 border-success' },
-  { id: 'rellamar', label: 'Rellamar', desc: 'Mantiene como lead', icon: PhoneCall, color: 'text-primary-500', bgActive: 'bg-primary-50 border-primary-500' },
-  { id: 'diferido', label: 'Diferido', desc: 'Reprogramar contacto', icon: CalendarClock, color: 'text-warning', bgActive: 'bg-warning/10 border-warning' },
-  { id: 'fallido', label: 'Fallido / Negativo', desc: 'Marcar como perdido', icon: ThumbsDown, color: 'text-danger', bgActive: 'bg-danger/10 border-danger' },
+  { id: 'exit', label: 'Contacto Exitoso', desc: 'Avanza a oportunidad', icon: CheckCircle, bgActive: 'bg-success-500 border-success-500 text-white', hoverClass: 'hover:bg-success-500 hover:border-success-500 hover:text-white' },
+  { id: 'rellamar', label: 'Rellamar', desc: 'Mantiene como lead', icon: PhoneCall, bgActive: 'bg-primary-500 border-primary-500 text-white', hoverClass: 'hover:bg-primary-500 hover:border-primary-500 hover:text-white' },
+  { id: 'diferido', label: 'Diferido', desc: 'Reprogramar contacto', icon: CalendarClock, bgActive: 'bg-warning-500 border-warning-500 text-white', hoverClass: 'hover:bg-warning-500 hover:border-warning-500 hover:text-white' },
+  { id: 'fallido', label: 'Fallido / Negativo', desc: 'Marcar como perdido', icon: ThumbsDown, bgActive: 'bg-danger-500 border-danger-500 text-white', hoverClass: 'hover:bg-danger-500 hover:border-danger-500 hover:text-white' },
 ];
 
 export default function ResolutionModal({ task, onClose, onSave }) {
@@ -63,17 +63,17 @@ export default function ResolutionModal({ task, onClose, onSave }) {
                   key={opt.id}
                   type="button"
                   onClick={() => setSelectedOption(opt.id)}
-                  className={`flex flex-col items-start p-4 rounded-xl border-2 text-left transition-all ${
+                  className={`flex flex-col items-start p-4 rounded-xl border-2 text-left transition-all group ${
                     isSelected 
                       ? opt.bgActive
-                      : 'border-neutral-200 bg-neutral-50 hover:border-neutral-300 hover:bg-neutral-100'
+                      : `border-neutral-200 bg-white text-neutral-700 ${opt.hoverClass}`
                   }`}
                 >
-                  <Icon className={`mb-2 ${isSelected ? opt.color : 'text-neutral-500'}`} size={24} />
-                  <span className={`font-semibold ${isSelected ? 'text-neutral-900' : 'text-neutral-700'}`}>
+                  <Icon className={`mb-2 ${isSelected ? 'text-white' : 'text-neutral-500 group-hover:text-white'}`} size={24} />
+                  <span className="font-semibold">
                     {opt.label}
                   </span>
-                  <span className="text-xs text-neutral-500 mt-1">{opt.desc}</span>
+                  <span className={`text-xs mt-1 ${isSelected ? 'text-white/80' : 'text-neutral-500 group-hover:text-white/80'}`}>{opt.desc}</span>
                 </button>
               );
             })}

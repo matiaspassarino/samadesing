@@ -215,10 +215,17 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
             {/* HISTORIAL / TRAZABILIDAD */}
             <div className="mt-auto">
-              <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-4 border-t border-neutral-200 pt-6">
-                <History className="text-primary-500" size={18} />
-                Trazabilidad y Movimientos
-              </h4>
+              <div className="flex justify-between items-end mb-4 border-t border-neutral-200 pt-6">
+                <h4 className="font-bold text-neutral-800 flex items-center gap-2">
+                  <History className="text-primary-500" size={18} />
+                  Trazabilidad y Movimientos
+                </h4>
+                {!loadingHistorial && (
+                  <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md">
+                    {historial.length} interacciones
+                  </span>
+                )}
+              </div>
               
               {loadingHistorial ? (
                 <div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>
@@ -267,29 +274,29 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 </label>
                 <div className="flex flex-col gap-3">
                   <label className={`
-                    flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'exitoso' ? 'border-success-500 bg-success-50 text-success-900' : 'border-neutral-200 bg-white hover:border-success-200'}
+                    group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                    ${resultado === 'exitoso' ? 'border-success-500 bg-success-500 text-white' : 'border-neutral-200 bg-white hover:bg-success-500 hover:border-success-500 hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                    <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-success-500' : 'text-neutral-400'} />
-                    <span className="font-semibold text-sm">Contacto Exitoso (Pasar a Supervisor)</span>
+                    <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+                    <span className="font-semibold text-sm">Contacto Exitoso (Pasar a Sup.)</span>
                   </label>
 
                   <label className={`
-                    flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'rellamar' ? 'border-warning-500 bg-warning-50 text-warning-900' : 'border-neutral-200 bg-white hover:border-warning-200'}
+                    group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                    ${resultado === 'rellamar' ? 'border-warning-500 bg-warning-500 text-white' : 'border-neutral-200 bg-white hover:bg-warning-500 hover:border-warning-500 hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                    <Clock size={20} className={resultado === 'rellamar' ? 'text-warning-500' : 'text-neutral-400'} />
+                    <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
                     <span className="font-semibold text-sm">No Atiende / Rellamar</span>
                   </label>
 
                   <label className={`
-                    flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'descartar' ? 'border-danger-500 bg-danger-50 text-danger-900' : 'border-neutral-200 bg-white hover:border-danger-200'}
+                    group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                    ${resultado === 'descartar' ? 'border-danger-500 bg-danger-500 text-white' : 'border-neutral-200 bg-white hover:bg-danger-500 hover:border-danger-500 hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                    <Trash2 size={20} className={resultado === 'descartar' ? 'text-danger-500' : 'text-neutral-400'} />
+                    <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
                     <span className="font-semibold text-sm">Descartar (Perdido)</span>
                   </label>
                 </div>
