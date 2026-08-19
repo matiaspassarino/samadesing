@@ -275,7 +275,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 <div className="flex flex-col gap-3">
                   <label className={`
                     group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'exitoso' ? 'border-success bg-success text-white' : 'border-neutral-200 bg-white hover:bg-success hover:border-success hover:text-white text-neutral-700'}
+                    ${resultado === 'exitoso' ? 'border-green-500 bg-green-500 text-white' : 'border-neutral-200 bg-white hover:bg-green-500 hover:border-green-500 hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
                     <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
@@ -284,7 +284,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
                   <label className={`
                     group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'rellamar' ? 'border-warning bg-warning text-white' : 'border-neutral-200 bg-white hover:bg-warning hover:border-warning hover:text-white text-neutral-700'}
+                    ${resultado === 'rellamar' ? 'border-yellow-500 bg-yellow-500 text-white' : 'border-neutral-200 bg-white hover:bg-yellow-500 hover:border-yellow-500 hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
                     <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
@@ -293,7 +293,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
                   <label className={`
                     group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'descartar' ? 'border-danger bg-danger text-white' : 'border-neutral-200 bg-white hover:bg-danger hover:border-danger hover:text-white text-neutral-700'}
+                    ${resultado === 'descartar' ? 'border-red-500 bg-red-500 text-white' : 'border-neutral-200 bg-white hover:bg-red-500 hover:border-red-500 hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
                     <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
