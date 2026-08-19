@@ -1,7 +1,7 @@
 import React from 'react';
-import { Circle, CheckCircle2 } from 'lucide-react';
+import { Circle, Eye } from 'lucide-react';
 
-export default function TaskRow({ task, onComplete }) {
+export default function TaskRow({ task, onComplete, onViewDetails }) {
   return (
     <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-neutral-200 hover:shadow-sm transition-shadow">
       {/* Botón Circular Falso (Check) */}
@@ -29,12 +29,21 @@ export default function TaskRow({ task, onComplete }) {
       </div>
 
       {/* Acción Derecha */}
-      <button 
-        onClick={onComplete}
-        className="flex-shrink-0 bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
-      >
-        COMPLETAR
-      </button>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={onViewDetails}
+          className="flex-shrink-0 p-2 text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+          title="Ver y Editar Detalles"
+        >
+          <Eye size={20} />
+        </button>
+        <button 
+          onClick={onComplete}
+          className="flex-shrink-0 bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+        >
+          COMPLETAR
+        </button>
+      </div>
     </div>
   );
 }

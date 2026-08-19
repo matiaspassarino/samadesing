@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Users, CheckSquare, Square, UserPlus, Loader2 } from 'lucide-react';
+import { Users, CheckSquare, Square, UserPlus, Loader2, Eye } from 'lucide-react';
+import ContactDetailsModal from '../components/ContactDetailsModal';
 
 export default function SupervisorView() {
   const [contactos, setContactos] = useState([]);
@@ -9,6 +10,9 @@ export default function SupervisorView() {
   const [selectedVendedor, setSelectedVendedor] = useState('');
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
+  
+  // Para el modal
+  const [contactoToView, setContactoToView] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -122,6 +126,7 @@ export default function SupervisorView() {
                 <th className="px-4 py-3 font-semibold">CUIT</th>
                 <th className="px-4 py-3 font-semibold">Provincia</th>
                 <th className="px-4 py-3 font-semibold">Fecha Ingreso al Sup.</th>
+                <th className="px-4 py-3 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
@@ -138,12 +143,29 @@ export default function SupervisorView() {
                     <td className="px-4 py-3">{contacto.cuit || '-'}</td>
                     <td className="px-4 py-3">{contacto.provincia || '-'}</td>
                     <td className="px-4 py-3">{new Date(contacto.fecha_actualizacion).toLocaleDateString('es-AR')}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button 
+                        onClick={() => setContactoToView(contacto)}
+                        className="text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 p-2 rounded-lg transition-colors ml-auto"
+                        title="Ver y Editar Detalles"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {contactoToView && (
+        <ContactDetailsModal 
+          contacto={contactoToView} 
+          onClose={() => setContactoToView(null)} 
+          onRefresh={fetchData} 
+        />
       )}
     </div>
   );

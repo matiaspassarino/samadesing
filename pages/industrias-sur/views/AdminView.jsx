@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '../lib/supabase';
-import { Upload, Database, Loader2, FileText, Users, PhoneCall, Filter } from 'lucide-react';
-import AdminContactModal from '../components/AdminContactModal';
+import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2 } from 'lucide-react';
+import ContactDetailsModal from '../components/ContactDetailsModal';
 
 export default function AdminView() {
-  const [activeTab, setActiveTab] = useState('gestionar');
+  const [activeTab, setActiveTab] = useState('nuevos'); // 'nuevos', 'recontactos', 'perdidos', 'importar'
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +30,6 @@ export default function AdminView() {
 
   const handleImport = async () => {
     setLoading(true);
-    // Mapeamos a las columnas de la BD 'contactos'
     const validContactos = data.map(row => ({
       codigo: row['Código'] || null,
       razon_social: row['Razón Social'] || row['Razon Social'] || 'Empresa Desconocida',
@@ -45,12 +44,11 @@ export default function AdminView() {
     })).filter(c => c.razon_social !== 'Empresa Desconocida' && c.razon_social !== '');
 
     if (validContactos.length === 0) {
-      alert("No se encontraron contactos válidos en el CSV. Asegúrate de tener la columna 'Razón Social'.");
+      alert("No se encontraron contactos válidos en el CSV.");
       setLoading(false);
       return;
     }
 
-    // Para evitar cargar de a uno, enviamos todo el array
     const { error } = await supabase.from('contactos').insert(validContactos);
     
     if (error) {
@@ -58,8 +56,7 @@ export default function AdminView() {
     } else {
       alert(`¡${validContactos.length} contactos importados con éxito!`);
       setData([]);
-      fetchContactos(); // Actualizar lista
-      setActiveTab('gestionar');
+      setActiveTab('nuevos');
     }
     setLoading(false);
   };
@@ -67,83 +64,145 @@ export default function AdminView() {
   // --- LÓGICA DE GESTIÓN DE CONTACTOS ---
   const fetchContactos = async () => {
     setLoadingContactos(true);
-    const { data: contactosData, error } = await supabase
-      .from('contactos')
-      .select('*')
-      .in('estado_actual', ['Nuevo', 'Admin_Rellamar'])
-      .order('fecha_actualizacion', { ascending: false });
+    let estadoQuery = [];
+    if (activeTab === 'nuevos') estadoQuery = ['Nuevo'];
+    else if (activeTab === 'recontactos') estadoQuery = ['Admin_Rellamar'];
+    else if (activeTab === 'perdidos') estadoQuery = ['Descartado'];
 
-    if (!error && contactosData) {
-      setContactos(contactosData);
+    if (estadoQuery.length > 0) {
+      const { data: contactosData, error } = await supabase
+        .from('contactos')
+        .select('*')
+        .in('estado_actual', estadoQuery)
+        .order('fecha_creacion', { ascending: false });
+
+      if (!error && contactosData) {
+        setContactos(contactosData);
+      }
     }
     setLoadingContactos(false);
   };
 
   useEffect(() => {
-    if (activeTab === 'gestionar') {
+    if (activeTab !== 'importar') {
       fetchContactos();
     }
   }, [activeTab]);
 
-  const handleSaveInteraction = async (interactionData) => {
-    const { contacto_id, resultado, comentarios } = interactionData;
+  const handleReingresar = async (contacto) => {
+    const { error } = await supabase.from('contactos').update({ estado_actual: 'Nuevo' }).eq('id', contacto.id);
+    if (!error) {
+      await supabase.from('interacciones_contactos').insert({
+        contacto_id: contacto.id,
+        tipo_accion: 'Reingreso al Circuito',
+        resultado: 'Reingresado',
+        notas: 'Contacto devuelto a la bandeja de Nuevos por el Administrador.',
+        completada: true
+      });
+      fetchContactos();
+    }
+  };
+
+  const renderTable = () => {
+    if (loadingContactos) return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary-500" size={32} /></div>;
     
-    let nuevoEstado = 'Nuevo';
-    
-    if (resultado === 'exitoso') {
-      nuevoEstado = 'Supervisor'; // Pasa al supervisor para asignar
-    } else if (resultado === 'rellamar') {
-      nuevoEstado = 'Admin_Rellamar'; // Se queda en el admin para reintento
-    } else if (resultado === 'descartar') {
-      nuevoEstado = 'Descartado'; // Va al archivo muerto
+    if (contactos.length === 0) {
+      return (
+        <div className="text-center p-12 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 text-neutral-500">
+          No hay contactos en esta vista.
+        </div>
+      );
     }
 
-    // 1. Guardar interaccion
-    await supabase.from('interacciones_contactos').insert({
-      contacto_id,
-      tipo_accion: 'Llamada Admin',
-      resultado,
-      notas: comentarios,
-      completada: true
-    });
-
-    // 2. Actualizar contacto
-    await supabase.from('contactos').update({ estado_actual: nuevoEstado }).eq('id', contacto_id);
-
-    setSelectedContacto(null);
-    fetchContactos();
+    return (
+      <div className="overflow-x-auto border border-neutral-200 rounded-lg bg-white">
+        <table className="w-full text-left text-sm text-neutral-600">
+          <thead className="bg-neutral-50 text-neutral-800 border-b border-neutral-200">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Razón Social</th>
+              <th className="px-4 py-3 font-semibold">Teléfono</th>
+              <th className="px-4 py-3 font-semibold">Provincia</th>
+              <th className="px-4 py-3 font-semibold">Fecha Ingreso</th>
+              <th className="px-4 py-3 font-semibold text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-200">
+            {contactos.map((c) => (
+              <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
+                <td className="px-4 py-3 font-medium text-neutral-800">{c.razon_social}</td>
+                <td className="px-4 py-3">{c.telefono || '-'}</td>
+                <td className="px-4 py-3">{c.provincia || '-'}</td>
+                <td className="px-4 py-3">{new Date(c.fecha_creacion).toLocaleDateString('es-AR')}</td>
+                <td className="px-4 py-3 flex justify-end gap-2">
+                  {activeTab === 'perdidos' ? (
+                    <button 
+                      onClick={() => handleReingresar(c)}
+                      className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                    >
+                      <RefreshCw size={16} /> Reingresar
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setSelectedContacto(c)}
+                      className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                    >
+                      <PhoneCall size={16} /> Contactar
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
-      <div className="mb-6 border-b border-neutral-200 pb-4 flex justify-between items-center">
+      <div className="mb-6 border-b border-neutral-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="font-heading font-bold text-2xl text-neutral-800 flex items-center gap-2">
             <Database className="text-primary-500" />
-            Administración de Datos
+            Administración de Contactos
           </h2>
-          <p className="text-neutral-500">Importa contactos o realiza el primer contacto.</p>
+          <p className="text-neutral-500">Gestiona los ingresos en frío y derívalos al equipo.</p>
         </div>
         
-        {/* TABS */}
-        <div className="flex bg-neutral-100 p-1 rounded-lg">
+        {/* TABS PRINCIPALES Y SUB-TABS */}
+        <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 overflow-x-auto max-w-full">
           <button 
-            onClick={() => setActiveTab('gestionar')}
-            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${activeTab === 'gestionar' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+            onClick={() => setActiveTab('nuevos')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'nuevos' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
           >
-            <PhoneCall size={16} /> Gestionar
+            <Sparkles size={16} /> Nuevos
           </button>
           <button 
+            onClick={() => setActiveTab('recontactos')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'recontactos' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+          >
+            <Clock size={16} /> Recontactos
+          </button>
+          <button 
+            onClick={() => setActiveTab('perdidos')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'perdidos' ? 'bg-white text-danger-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+          >
+            <Trash2 size={16} /> Perdidos
+          </button>
+          
+          <div className="w-px bg-neutral-300 mx-1"></div>
+
+          <button 
             onClick={() => setActiveTab('importar')}
-            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${activeTab === 'importar' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'importar' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
           >
             <Upload size={16} /> Importar CSV
           </button>
         </div>
       </div>
 
-      {activeTab === 'importar' && (
-        <div>
+      {activeTab === 'importar' ? (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="flex flex-col md:flex-row gap-6 mb-8">
             <div className="flex-1 bg-neutral-50 border-2 border-dashed border-neutral-300 rounded-xl p-8 text-center hover:bg-neutral-100 transition-colors">
               <Upload className="mx-auto text-neutral-400 mb-3" size={32} />
@@ -204,72 +263,29 @@ export default function AdminView() {
             </div>
           )}
         </div>
-      )}
-
-      {activeTab === 'gestionar' && (
-        <div>
+      ) : (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-neutral-700 flex items-center gap-2">
-              <Users size={18} /> Contactos Pendientes
+              <Users size={18} /> 
+              {activeTab === 'nuevos' && 'Contactos Recientes'}
+              {activeTab === 'recontactos' && 'Pendientes de Rellamada'}
+              {activeTab === 'perdidos' && 'Contactos Descartados'}
             </h3>
             <span className="bg-primary-100 text-primary-800 text-xs font-bold px-2 py-1 rounded-full">
               {contactos.length} Totales
             </span>
           </div>
 
-          {loadingContactos ? (
-             <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
-          ) : contactos.length === 0 ? (
-            <div className="text-center p-12 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 text-neutral-500">
-              No hay contactos nuevos pendientes de llamar.
-            </div>
-          ) : (
-            <div className="overflow-x-auto border border-neutral-200 rounded-lg">
-              <table className="w-full text-left text-sm text-neutral-600">
-                <thead className="bg-neutral-50 text-neutral-800 border-b border-neutral-200">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Razón Social</th>
-                    <th className="px-4 py-3 font-semibold">Teléfono</th>
-                    <th className="px-4 py-3 font-semibold">Provincia</th>
-                    <th className="px-4 py-3 font-semibold">Estado</th>
-                    <th className="px-4 py-3 font-semibold text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-200">
-                  {contactos.map((c) => (
-                    <tr key={c.id} className="hover:bg-neutral-50">
-                      <td className="px-4 py-3 font-medium text-neutral-800">{c.razon_social}</td>
-                      <td className="px-4 py-3">{c.telefono || '-'}</td>
-                      <td className="px-4 py-3">{c.provincia || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          c.estado_actual === 'Admin_Rellamar' ? 'bg-warning-100 text-warning-800' : 'bg-success-100 text-success-800'
-                        }`}>
-                          {c.estado_actual === 'Admin_Rellamar' ? 'Reintento' : 'Nuevo'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button 
-                          onClick={() => setSelectedContacto(c)}
-                          className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 ml-auto transition-colors"
-                        >
-                          <PhoneCall size={16} /> Contactar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {renderTable()}
         </div>
       )}
 
       {selectedContacto && (
-        <AdminContactModal 
+        <ContactDetailsModal 
           contacto={selectedContacto} 
           onClose={() => setSelectedContacto(null)} 
-          onSave={handleSaveInteraction} 
+          onRefresh={fetchContactos} 
         />
       )}
     </div>

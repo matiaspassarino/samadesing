@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import TaskRow from '../components/TaskRow';
 import ResolutionModal from '../components/ResolutionModal';
+import ContactDetailsModal from '../components/ContactDetailsModal';
 import { Inbox, Briefcase, Calendar, Users, Loader2 } from 'lucide-react';
 
 const TABS = [
@@ -15,13 +16,14 @@ export default function VendedorView({ session }) {
   const [activeTab, setActiveTab] = useState('tareas');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTask, setSelectedTask] = useState(null);
+  
+  const [selectedTask, setSelectedTask] = useState(null); // Tarea para completar (ResolutionModal)
+  const [viewContact, setViewContact] = useState(null); // Contacto para ver detalles (ContactDetailsModal)
 
   const fetchTabData = async () => {
     setLoading(true);
     
     if (activeTab === 'tareas') {
-      // TAREAS: Interacciones pendientes
       const { data: interacciones, error } = await supabase
         .from('interacciones_contactos')
         .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos (razon_social, estado_actual)`)
@@ -50,21 +52,15 @@ export default function VendedorView({ session }) {
         setData(mapped);
       }
     } else {
-      // BANDEJA, OPORTUNIDADES, CLIENTES: leemos directamente de la tabla contactos
       let query = supabase.from('contactos').select('*').order('fecha_actualizacion', { ascending: false });
       
-      // Aseguramos traer solo los del vendedor actual si es necesario (el RLS podría hacerlo, pero mejor ser explícitos si session existe)
       if (session?.user?.id) {
          query = query.eq('vendedor_id', session.user.id);
       }
 
-      if (activeTab === 'bandeja') {
-        query = query.eq('estado_actual', 'Asignado');
-      } else if (activeTab === 'oportunidades') {
-        query = query.in('estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado']);
-      } else if (activeTab === 'clientes') {
-        query = query.in('estado_actual', ['Venta', 'Recompra']);
-      }
+      if (activeTab === 'bandeja') query = query.eq('estado_actual', 'Asignado');
+      else if (activeTab === 'oportunidades') query = query.in('estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado']);
+      else if (activeTab === 'clientes') query = query.in('estado_actual', ['Venta', 'Recompra']);
 
       const { data: contactosData, error } = await query;
       if (!error && contactosData) {
@@ -79,7 +75,7 @@ export default function VendedorView({ session }) {
             lead_id: l.id,
             leadName: l.razon_social,
             status: l.estado_actual,
-            urgencyText: `Asignado: ${new Date(l.fecha_actualizacion).toLocaleDateString('es-AR')}`,
+            urgencyText: `Actualizado: ${new Date(l.fecha_actualizacion).toLocaleDateString('es-AR')}`,
             badgeColor
           };
         });
@@ -93,8 +89,14 @@ export default function VendedorView({ session }) {
     fetchTabData();
   }, [activeTab]);
 
-  const handleActionClick = (item) => {
-    setSelectedTask(item);
+  const handleActionClick = (item) => setSelectedTask(item);
+
+  const handleViewDetails = async (item) => {
+    // Buscar la data completa del contacto para el Modal
+    const { data: contactoData } = await supabase.from('contactos').select('*').eq('id', item.lead_id).single();
+    if (contactoData) {
+      setViewContact(contactoData);
+    }
   };
 
   const handleSaveResolution = async (resolutionData) => {
@@ -140,9 +142,7 @@ export default function VendedorView({ session }) {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
-                isActive 
-                  ? 'bg-primary-50 text-primary-900 shadow-sm' 
-                  : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800'
+                isActive ? 'bg-primary-50 text-primary-900 shadow-sm' : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800'
               }`}
             >
               <Icon size={18} />
@@ -164,7 +164,8 @@ export default function VendedorView({ session }) {
             <TaskRow 
               key={item.id} 
               task={item} 
-              onComplete={() => handleActionClick(item)} 
+              onComplete={() => handleActionClick(item)}
+              onViewDetails={() => handleViewDetails(item)}
             />
           ))
         )}
@@ -175,6 +176,14 @@ export default function VendedorView({ session }) {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onSave={handleSaveResolution}
+        />
+      )}
+
+      {viewContact && (
+        <ContactDetailsModal 
+          contacto={viewContact} 
+          onClose={() => setViewContact(null)} 
+          onRefresh={fetchTabData} 
         />
       )}
     </div>
