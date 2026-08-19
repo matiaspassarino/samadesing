@@ -3,21 +3,25 @@ import { supabase } from '../lib/supabase';
 import { Users, CheckSquare, Square, UserPlus, Loader2 } from 'lucide-react';
 
 export default function SupervisorView() {
-  const [leads, setLeads] = useState([]);
+  const [contactos, setContactos] = useState([]);
   const [vendedores, setVendedores] = useState([]);
-  const [selectedLeads, setSelectedLeads] = useState(new Set());
+  const [selectedContactos, setSelectedContactos] = useState(new Set());
   const [selectedVendedor, setSelectedVendedor] = useState('');
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
-    const [leadsRes, vendRes] = await Promise.all([
-      supabase.from('leads').select('*').is('vendedor_id', null).eq('estado_actual', 'Nuevo').order('fecha_creacion', { ascending: false }),
+    const [contactosRes, vendRes] = await Promise.all([
+      supabase.from('contactos')
+        .select('*')
+        .is('vendedor_id', null)
+        .eq('estado_actual', 'Supervisor')
+        .order('fecha_actualizacion', { ascending: false }),
       supabase.from('perfiles').select('*').eq('rol', 'Vendedor')
     ]);
     
-    if (leadsRes.data) setLeads(leadsRes.data);
+    if (contactosRes.data) setContactos(contactosRes.data);
     if (vendRes.data) setVendedores(vendRes.data);
     setLoading(false);
   };
@@ -26,37 +30,39 @@ export default function SupervisorView() {
     fetchData();
   }, []);
 
-  const toggleLead = (id) => {
-    const next = new Set(selectedLeads);
+  const toggleContacto = (id) => {
+    const next = new Set(selectedContactos);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    setSelectedLeads(next);
+    setSelectedContactos(next);
   };
 
   const toggleAll = () => {
-    if (selectedLeads.size === leads.length) {
-      setSelectedLeads(new Set());
+    if (selectedContactos.size === contactos.length) {
+      setSelectedContactos(new Set());
     } else {
-      setSelectedLeads(new Set(leads.map(l => l.id)));
+      setSelectedContactos(new Set(contactos.map(c => c.id)));
     }
   };
 
   const handleAssign = async () => {
-    if (selectedLeads.size === 0 || !selectedVendedor) return;
+    if (selectedContactos.size === 0 || !selectedVendedor) return;
     setAssigning(true);
 
-    const leadIds = Array.from(selectedLeads);
+    const contactosIds = Array.from(selectedContactos);
     
     const { error } = await supabase
-      .from('leads')
-      .update({ vendedor_id: selectedVendedor })
-      .in('id', leadIds);
+      .from('contactos')
+      .update({ 
+        vendedor_id: selectedVendedor,
+        estado_actual: 'Asignado' // Pasa al vendedor
+      })
+      .in('id', contactosIds);
 
     if (error) {
       alert("Error al asignar: " + error.message);
     } else {
-      // Limpiar selección y refrescar lista
-      setSelectedLeads(new Set());
+      setSelectedContactos(new Set());
       setSelectedVendedor('');
       fetchData();
     }
@@ -69,9 +75,9 @@ export default function SupervisorView() {
         <div>
           <h2 className="font-heading font-bold text-2xl text-neutral-800 flex items-center gap-2">
             <Users className="text-primary-500" />
-            Asignación de Leads (Supervisor)
+            Asignación de Contactos (Supervisor)
           </h2>
-          <p className="text-neutral-500">Leads nuevos que aún no tienen un vendedor asignado.</p>
+          <p className="text-neutral-500">Contactos exitosos listos para asignar a un vendedor.</p>
         </div>
 
         <div className="flex items-center gap-3 bg-neutral-50 p-2 rounded-lg border border-neutral-200 w-full md:w-auto">
@@ -87,20 +93,20 @@ export default function SupervisorView() {
           </select>
           <button
             onClick={handleAssign}
-            disabled={selectedLeads.size === 0 || !selectedVendedor || assigning}
+            disabled={selectedContactos.size === 0 || !selectedVendedor || assigning}
             className="bg-primary-900 hover:bg-primary-500 text-white px-4 py-1.5 rounded text-sm font-semibold flex items-center gap-2 disabled:opacity-50 transition-colors"
           >
             {assigning ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
-            Asignar ({selectedLeads.size})
+            Asignar ({selectedContactos.size})
           </button>
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
-      ) : leads.length === 0 ? (
+      ) : contactos.length === 0 ? (
         <div className="text-center p-12 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 text-neutral-500">
-          No hay leads nuevos pendientes de asignación.
+          No hay contactos nuevos pendientes de asignación.
         </div>
       ) : (
         <div className="overflow-x-auto border border-neutral-200 rounded-lg">
@@ -109,27 +115,29 @@ export default function SupervisorView() {
               <tr>
                 <th className="px-4 py-3 w-12 text-center">
                   <button onClick={toggleAll} className="text-neutral-500 hover:text-primary-500">
-                    {selectedLeads.size === leads.length ? <CheckSquare size={20} /> : <Square size={20} />}
+                    {selectedContactos.size === contactos.length ? <CheckSquare size={20} /> : <Square size={20} />}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-semibold">Empresa</th>
+                <th className="px-4 py-3 font-semibold">Razón Social</th>
                 <th className="px-4 py-3 font-semibold">CUIT</th>
-                <th className="px-4 py-3 font-semibold">Fecha Ingreso</th>
+                <th className="px-4 py-3 font-semibold">Provincia</th>
+                <th className="px-4 py-3 font-semibold">Fecha Ingreso al Sup.</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
-              {leads.map((lead) => {
-                const isSelected = selectedLeads.has(lead.id);
+              {contactos.map((contacto) => {
+                const isSelected = selectedContactos.has(contacto.id);
                 return (
-                  <tr key={lead.id} className={`hover:bg-neutral-50 transition-colors ${isSelected ? 'bg-primary-50/30' : ''}`}>
+                  <tr key={contacto.id} className={`hover:bg-neutral-50 transition-colors ${isSelected ? 'bg-primary-50/30' : ''}`}>
                     <td className="px-4 py-3 text-center">
-                      <button onClick={() => toggleLead(lead.id)} className={`${isSelected ? 'text-primary-500' : 'text-neutral-300'} hover:text-primary-400`}>
+                      <button onClick={() => toggleContacto(contacto.id)} className={`${isSelected ? 'text-primary-500' : 'text-neutral-300'} hover:text-primary-400`}>
                         {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
                       </button>
                     </td>
-                    <td className="px-4 py-3 font-medium text-neutral-800">{lead.nombre_empresa}</td>
-                    <td className="px-4 py-3">{lead.cuit || '-'}</td>
-                    <td className="px-4 py-3">{new Date(lead.fecha_creacion).toLocaleDateString('es-AR')}</td>
+                    <td className="px-4 py-3 font-medium text-neutral-800">{contacto.razon_social}</td>
+                    <td className="px-4 py-3">{contacto.cuit || '-'}</td>
+                    <td className="px-4 py-3">{contacto.provincia || '-'}</td>
+                    <td className="px-4 py-3">{new Date(contacto.fecha_actualizacion).toLocaleDateString('es-AR')}</td>
                   </tr>
                 );
               })}
