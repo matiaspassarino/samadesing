@@ -37,7 +37,7 @@ export default function VendedorView({ session }) {
           const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' });
           
           let badgeColor = 'bg-primary-50 text-primary-900';
-          if (t.contactos?.estado_actual === 'Diferido') badgeColor = 'bg-warning/20 text-warning-700';
+          if (t.contactos?.estado_actual === 'Diferido') badgeColor = 'bg-warning/20 text-warning';
 
           return {
             id: t.id,
@@ -66,7 +66,7 @@ export default function VendedorView({ session }) {
       if (!error && contactosData) {
         const mapped = contactosData.map(l => {
           let badgeColor = 'bg-neutral-200 text-neutral-800';
-          if (l.estado_actual === 'Asignado') badgeColor = 'bg-success/20 text-success-700';
+          if (l.estado_actual === 'Asignado') badgeColor = 'bg-success/20 text-success';
           if (l.estado_actual === 'Venta') badgeColor = 'bg-primary-900 text-white';
 
           return {

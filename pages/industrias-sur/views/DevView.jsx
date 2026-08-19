@@ -68,14 +68,14 @@ export default function DevView() {
           </div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm flex items-center gap-4">
-          <div className="bg-success/10 p-3 rounded-lg text-success-600"><Database size={24} /></div>
+          <div className="bg-success/10 p-3 rounded-lg text-success"><Database size={24} /></div>
           <div>
             <p className="text-sm font-medium text-neutral-500">Leads en el Sistema</p>
             <p className="text-2xl font-bold text-neutral-800">{metrics.leads}</p>
           </div>
         </div>
         <div className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm flex items-center gap-4">
-          <div className="bg-warning/10 p-3 rounded-lg text-warning-600"><Database size={24} /></div>
+          <div className="bg-warning/10 p-3 rounded-lg text-warning"><Database size={24} /></div>
           <div>
             <p className="text-sm font-medium text-neutral-500">Total Interacciones</p>
             <p className="text-2xl font-bold text-neutral-800">{metrics.tareas}</p>

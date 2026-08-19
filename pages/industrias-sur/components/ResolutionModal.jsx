@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, CheckCircle, PhoneCall, CalendarClock, ThumbsDown } from 'lucide-react';
 
 const OPTIONS = [
-  { id: 'exit', label: 'Contacto Exitoso', desc: 'Avanza a oportunidad', icon: CheckCircle, bgActive: 'bg-success-500 border-success-500 text-white', hoverClass: 'hover:bg-success-500 hover:border-success-500 hover:text-white' },
+  { id: 'exit', label: 'Contacto Exitoso', desc: 'Avanza a oportunidad', icon: CheckCircle, bgActive: 'bg-success border-success text-white', hoverClass: 'hover:bg-success hover:border-success hover:text-white' },
   { id: 'rellamar', label: 'Rellamar', desc: 'Mantiene como lead', icon: PhoneCall, bgActive: 'bg-primary-500 border-primary-500 text-white', hoverClass: 'hover:bg-primary-500 hover:border-primary-500 hover:text-white' },
-  { id: 'diferido', label: 'Diferido', desc: 'Reprogramar contacto', icon: CalendarClock, bgActive: 'bg-warning-500 border-warning-500 text-white', hoverClass: 'hover:bg-warning-500 hover:border-warning-500 hover:text-white' },
-  { id: 'fallido', label: 'Fallido / Negativo', desc: 'Marcar como perdido', icon: ThumbsDown, bgActive: 'bg-danger-500 border-danger-500 text-white', hoverClass: 'hover:bg-danger-500 hover:border-danger-500 hover:text-white' },
+  { id: 'diferido', label: 'Diferido', desc: 'Reprogramar contacto', icon: CalendarClock, bgActive: 'bg-warning border-warning text-white', hoverClass: 'hover:bg-warning hover:border-warning hover:text-white' },
+  { id: 'fallido', label: 'Fallido / Negativo', desc: 'Marcar como perdido', icon: ThumbsDown, bgActive: 'bg-danger border-danger text-white', hoverClass: 'hover:bg-danger hover:border-danger hover:text-white' },
 ];
 
 export default function ResolutionModal({ task, onClose, onSave }) {

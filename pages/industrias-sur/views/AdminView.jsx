@@ -185,7 +185,7 @@ export default function AdminView() {
           </button>
           <button 
             onClick={() => setActiveTab('perdidos')}
-            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'perdidos' ? 'bg-white text-danger-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'perdidos' ? 'bg-white text-danger shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
           >
             <Trash2 size={16} /> Perdidos
           </button>

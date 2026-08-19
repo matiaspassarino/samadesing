@@ -241,9 +241,9 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                         <span className="font-semibold text-sm text-neutral-800 flex items-center gap-2">
                           {item.tipo_accion}
                           <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide
-                            ${item.resultado?.toLowerCase() === 'exitoso' ? 'bg-success-100 text-success-700' : 
-                              item.resultado?.toLowerCase() === 'descartar' ? 'bg-danger-100 text-danger-700' : 
-                              'bg-warning-100 text-warning-700'}`}>
+                            ${item.resultado?.toLowerCase() === 'exitoso' ? 'bg-success/20 text-success' : 
+                              item.resultado?.toLowerCase() === 'descartar' ? 'bg-danger/20 text-danger' : 
+                              'bg-warning/20 text-warning'}`}>
                             {item.resultado || 'Registro'}
                           </span>
                         </span>
@@ -275,7 +275,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 <div className="flex flex-col gap-3">
                   <label className={`
                     group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'exitoso' ? 'border-success-500 bg-success-500 text-white' : 'border-neutral-200 bg-white hover:bg-success-500 hover:border-success-500 hover:text-white text-neutral-700'}
+                    ${resultado === 'exitoso' ? 'border-success bg-success text-white' : 'border-neutral-200 bg-white hover:bg-success hover:border-success hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
                     <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
@@ -284,7 +284,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
                   <label className={`
                     group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'rellamar' ? 'border-warning-500 bg-warning-500 text-white' : 'border-neutral-200 bg-white hover:bg-warning-500 hover:border-warning-500 hover:text-white text-neutral-700'}
+                    ${resultado === 'rellamar' ? 'border-warning bg-warning text-white' : 'border-neutral-200 bg-white hover:bg-warning hover:border-warning hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
                     <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
@@ -293,7 +293,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
                   <label className={`
                     group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'descartar' ? 'border-danger-500 bg-danger-500 text-white' : 'border-neutral-200 bg-white hover:bg-danger-500 hover:border-danger-500 hover:text-white text-neutral-700'}
+                    ${resultado === 'descartar' ? 'border-danger bg-danger text-white' : 'border-neutral-200 bg-white hover:bg-danger hover:border-danger hover:text-white text-neutral-700'}
                   `}>
                     <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
                     <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
