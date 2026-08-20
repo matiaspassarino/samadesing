@@ -30,31 +30,115 @@ export default function AdminView() {
 
   const handleImport = async () => {
     setLoading(true);
-    const validContactos = data.map(row => ({
-      codigo: row['Código'] || null,
-      razon_social: row['Razón Social'] || row['Razon Social'] || 'Empresa Desconocida',
-      cuit: row['C.U.I.T.'] || row['CUIT'] || null,
-      telefono: row['Telefono'] || row['Teléfono'] || null,
-      fecha_alta: row['Fecha Alta'] || null,
-      provincia: row['Provincia'] || null,
-      domicilio: row['Domicilio'] || null,
-      condicion_iva: row['Condicion IVA'] || null,
-      unidad_negocio: row['UNIDADE DE NEGOCIO'] || row['Unidad de Negocio'] || null,
-      estado_actual: 'Nuevo'
-    })).filter(c => c.razon_social !== 'Empresa Desconocida' && c.razon_social !== '');
+    
+    // 1. Parsear y limpiar datos del CSV
+    let validContactos = [];
+    let invalidosCount = 0;
+    
+    const telefonosVistos = new Set();
+    const emailsVistos = new Set();
+    
+    data.forEach(row => {
+      const razonSocial = row['Razón Social'] || row['Razon Social'];
+      if (!razonSocial || razonSocial === 'Empresa Desconocida') return;
+
+      const rawTelefono = row['Telefono'] || row['Teléfono'] || '';
+      const telefonoLimpio = rawTelefono.replace(/\D/g, ''); // Deja solo los dígitos
+      
+      const email = row['Email'] || row['Mail'] || row['Correo'] || null;
+
+      // Validación 1: Teléfono debe tener exactamente 10 dígitos
+      if (telefonoLimpio.length !== 10) {
+        invalidosCount++;
+        return;
+      }
+
+      // Validación 2: Duplicados dentro del mismo archivo
+      if (telefonosVistos.has(telefonoLimpio)) {
+        invalidosCount++;
+        return;
+      }
+      
+      if (email && emailsVistos.has(email)) {
+        invalidosCount++;
+        return;
+      }
+
+      telefonosVistos.add(telefonoLimpio);
+      if (email) emailsVistos.add(email);
+
+      validContactos.push({
+        codigo: row['Código'] || null,
+        razon_social: razonSocial,
+        cuit: row['C.U.I.T.'] || row['CUIT'] || null,
+        telefono: telefonoLimpio,
+        email: email,
+        fecha_alta: row['Fecha Alta'] || null,
+        provincia: row['Provincia'] || null,
+        domicilio: row['Domicilio'] || null,
+        condicion_iva: row['Condicion IVA'] || null,
+        unidad_negocio: row['UNIDADE DE NEGOCIO'] || row['Unidad de Negocio'] || null,
+        estado_actual: 'Nuevo'
+      });
+    });
 
     if (validContactos.length === 0) {
-      alert("No se encontraron contactos válidos en el CSV.");
+      alert(`No se encontraron contactos válidos en el CSV para importar.\n\nSe omitieron ${invalidosCount} registros por teléfono inválido (debe tener 10 dígitos) o por estar duplicados en el archivo.`);
       setLoading(false);
       return;
     }
 
-    const { error } = await supabase.from('contactos').insert(validContactos);
+    // 2. Controlar duplicados con la base de datos
+    const telefonos = validContactos.map(c => c.telefono);
+    const emails = validContactos.map(c => c.email).filter(Boolean);
+    
+    let orQuery = `telefono.in.(${telefonos.join(',')})`;
+    if (emails.length > 0) {
+      orQuery += `,email.in.(${emails.map(e => `"${e}"`).join(',')})`;
+    }
+
+    const { data: existentesDb, error: errFetch } = await supabase
+      .from('contactos')
+      .select('telefono, email')
+      .or(orQuery);
+
+    if (errFetch) {
+      alert("Error al verificar duplicados: " + errFetch.message);
+      setLoading(false);
+      return;
+    }
+
+    const setTelefonosDb = new Set(existentesDb.map(c => c.telefono).filter(Boolean));
+    const setEmailsDb = new Set(existentesDb.map(c => c.email).filter(Boolean));
+
+    const finalContactos = [];
+    let dbDuplicadosCount = 0;
+
+    validContactos.forEach(c => {
+      if (setTelefonosDb.has(c.telefono) || (c.email && setEmailsDb.has(c.email))) {
+        dbDuplicadosCount++;
+      } else {
+        finalContactos.push(c);
+      }
+    });
+
+    if (finalContactos.length === 0) {
+       alert(`No se importó ningún contacto.\n\nTodos los registros válidos (${validContactos.length}) ya existían en la base de datos (por teléfono o email).`);
+       setLoading(false);
+       return;
+    }
+
+    // 3. Insertar los realmente nuevos
+    const { error } = await supabase.from('contactos').insert(finalContactos);
     
     if (error) {
-      alert("Error al importar: " + error.message);
+      alert("Error al importar en base de datos: " + error.message);
     } else {
-      alert(`¡${validContactos.length} contactos importados con éxito!`);
+      let msg = `¡${finalContactos.length} contactos importados con éxito!`;
+      if (invalidosCount > 0) msg += `\n- ${invalidosCount} omitidos por formato inválido (teléfono debe tener 10 dígitos) o repetidos en el archivo.`;
+      if (dbDuplicadosCount > 0) msg += `\n- ${dbDuplicadosCount} omitidos por ya existir en la base de datos.`;
+      
+      alert(msg);
       setData([]);
       setActiveTab('nuevos');
     }

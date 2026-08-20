@@ -50,3 +50,23 @@ CREATE TRIGGER on_contactos_updated
   BEFORE UPDATE ON public.contactos
   FOR EACH ROW
   EXECUTE PROCEDURE public.handle_updated_at();
+
+-- 4. Modificaciones a la tabla de Contactos (Email y validaciones)
+ALTER TABLE public.contactos ADD COLUMN IF NOT EXISTS email TEXT;
+-- Asegurar que el teléfono y email principal no se repitan
+ALTER TABLE public.contactos ADD CONSTRAINT contactos_telefono_key UNIQUE (telefono);
+ALTER TABLE public.contactos ADD CONSTRAINT contactos_email_key UNIQUE (email);
+
+-- 5. Nueva tabla para Personas Asociadas al Contacto
+CREATE TABLE public.personas_contacto (
+    id UUID DEFAULT extensions.uuid_generate_v4() PRIMARY KEY,
+    contacto_id UUID REFERENCES public.contactos(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    puesto TEXT,
+    telefono TEXT,
+    email TEXT,
+    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.personas_contacto ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir todo en personas_contacto" ON public.personas_contacto FOR ALL USING (true) WITH CHECK (true);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, CheckCircle, Clock, Trash2, Save, History, Building2, Phone, MapPin, FileText, Loader2 } from 'lucide-react';
+import { X, CheckCircle, Clock, Trash2, Save, History, Building2, Phone, MapPin, FileText, Loader2, Mail, UserPlus, Users } from 'lucide-react';
 
 const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medús'];
 
@@ -10,6 +10,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
     razon_social: contacto.razon_social || '',
     cuit: contacto.cuit || '',
     telefono: contacto.telefono || '',
+    email: contacto.email || '',
     provincia: contacto.provincia || '',
     domicilio: contacto.domicilio || '',
     condicion_iva: contacto.condicion_iva || ''
@@ -23,6 +24,12 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
   const [savingInfo, setSavingInfo] = useState(false);
 
+  // Estados para Personas Asociadas
+  const [personas, setPersonas] = useState([]);
+  const [loadingPersonas, setLoadingPersonas] = useState(true);
+  const [newPersona, setNewPersona] = useState({ nombre: '', puesto: '', telefono: '', email: '' });
+  const [savingPersona, setSavingPersona] = useState(false);
+
   // Estados para la Interacción
   const [resultado, setResultado] = useState('exitoso');
   const [comentarios, setComentarios] = useState('');
@@ -34,7 +41,46 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
 
   useEffect(() => {
     fetchHistorial();
+    fetchPersonas();
   }, [contacto.id]);
+
+  const fetchPersonas = async () => {
+    setLoadingPersonas(true);
+    const { data, error } = await supabase
+      .from('personas_contacto')
+      .select('*')
+      .eq('contacto_id', contacto.id)
+      .order('fecha_creacion', { ascending: true });
+    if (!error && data) {
+      setPersonas(data);
+    }
+    setLoadingPersonas(false);
+  };
+
+  const handleAddPersona = async (e) => {
+    e.preventDefault();
+    if (!newPersona.nombre.trim()) return;
+    setSavingPersona(true);
+    const { data, error } = await supabase.from('personas_contacto').insert({
+      contacto_id: contacto.id,
+      ...newPersona
+    }).select();
+    
+    if (error) {
+      alert("Error al guardar persona: " + error.message);
+    } else {
+      setPersonas([...personas, data[0]]);
+      setNewPersona({ nombre: '', puesto: '', telefono: '', email: '' });
+    }
+    setSavingPersona(false);
+  };
+
+  const handleDeletePersona = async (id) => {
+    const { error } = await supabase.from('personas_contacto').delete().eq('id', id);
+    if (!error) {
+      setPersonas(personas.filter(p => p.id !== id));
+    }
+  };
 
   const fetchHistorial = async () => {
     setLoadingHistorial(true);
@@ -170,28 +216,33 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 <input type="text" name="cuit" value={formData.cuit} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500 font-mono" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Teléfono</label>
+                <label className="block text-xs font-semibold text-neutral-500 mb-1">Teléfono Principal</label>
                 <div className="relative">
                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                   <input type="text" name="telefono" value={formData.telefono} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
                 </div>
               </div>
               <div>
+                <label className="block text-xs font-semibold text-neutral-500 mb-1">Email Principal</label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <input type="email" name="email" value={formData.email} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-neutral-500 mb-1">Condición IVA</label>
                 <input type="text" name="condicion_iva" value={formData.condicion_iva} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
               </div>
-              <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                <div>
+              <div>
                   <label className="block text-xs font-semibold text-neutral-500 mb-1">Provincia</label>
                   <input type="text" name="provincia" value={formData.provincia} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
-                </div>
-                <div>
+              </div>
+              <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-neutral-500 mb-1">Domicilio</label>
                   <div className="relative">
                     <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                     <input type="text" name="domicilio" value={formData.domicilio} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
                   </div>
-                </div>
               </div>
             </div>
 
@@ -211,6 +262,52 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                   </label>
                 ))}
               </div>
+            </div>
+
+            {/* PERSONAS ASOCIADAS */}
+            <div className="mb-8 border-t border-neutral-200 pt-6">
+              <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-4">
+                <Users className="text-primary-500" size={18} />
+                Personas Asociadas
+              </h4>
+              
+              {/* Formulario Nueva Persona */}
+              <form onSubmit={handleAddPersona} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 mb-4">
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <input type="text" placeholder="Nombre completo" value={newPersona.nombre} onChange={e => setNewPersona({...newPersona, nombre: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" required />
+                  <input type="text" placeholder="Puesto (ej: Compras)" value={newPersona.puesto} onChange={e => setNewPersona({...newPersona, puesto: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+                  <input type="text" placeholder="Teléfono" value={newPersona.telefono} onChange={e => setNewPersona({...newPersona, telefono: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+                  <input type="email" placeholder="Email" value={newPersona.email} onChange={e => setNewPersona({...newPersona, email: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+                </div>
+                <button type="submit" disabled={savingPersona} className="w-full bg-primary-100 hover:bg-primary-200 text-primary-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  {savingPersona ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                  Agregar Persona
+                </button>
+              </form>
+
+              {/* Lista de Personas */}
+              {loadingPersonas ? (
+                 <div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>
+              ) : personas.length > 0 ? (
+                <div className="space-y-2">
+                  {personas.map(p => (
+                    <div key={p.id} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+                      <div>
+                        <p className="font-semibold text-sm text-neutral-800">{p.nombre} <span className="text-xs font-normal text-neutral-500 ml-1">({p.puesto || 'Sin puesto'})</span></p>
+                        <p className="text-xs text-neutral-600 mt-0.5">
+                          {p.telefono && <span className="mr-3">📞 {p.telefono}</span>}
+                          {p.email && <span>✉️ {p.email}</span>}
+                        </p>
+                      </div>
+                      <button onClick={() => handleDeletePersona(p.id)} className="text-neutral-400 hover:text-red-500 transition-colors p-1" title="Eliminar persona">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500 text-center py-2 italic">No hay personas asociadas aún.</p>
+              )}
             </div>
 
             {/* HISTORIAL / TRAZABILIDAD */}
