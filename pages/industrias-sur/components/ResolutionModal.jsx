@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, PhoneCall, CalendarClock, ThumbsDown } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const OPTIONS = [
   { id: 'exit', label: 'Contacto Exitoso', desc: 'Avanza a oportunidad', icon: CheckCircle, bgActive: 'bg-green-500 border-green-500 text-white', hoverClass: 'hover:bg-green-500 hover:border-green-500 hover:text-white' },
@@ -22,7 +23,7 @@ export default function ResolutionModal({ task, onClose, onSave }) {
     
     // Validación de fecha si es diferido
     if (isDeferred && !deferDate) {
-      alert('Por favor selecciona una fecha para diferir.');
+      toast.error('Por favor selecciona una fecha para diferir.');
       return;
     }
 

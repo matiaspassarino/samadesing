@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { supabase } from '../lib/supabase';
 import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2, Users } from 'lucide-react';
 import ContactDetailsModal from '../components/ContactDetailsModal';
+import { toast } from 'react-hot-toast';
 
 export default function AdminView() {
   const [activeTab, setActiveTab] = useState('nuevos'); // 'nuevos', 'recontactos', 'perdidos', 'importar'
@@ -83,7 +84,7 @@ export default function AdminView() {
     });
 
     if (validContactos.length === 0) {
-      alert(`No se encontraron contactos válidos en el CSV para importar.\n\nSe omitieron ${invalidosCount} registros por teléfono inválido (debe tener 10 dígitos) o por estar duplicados en el archivo.`);
+      toast.error(`No se encontraron contactos válidos.\nSe omitieron ${invalidosCount} registros por datos inválidos o repetidos.`, { duration: 5000 });
       setLoading(false);
       return;
     }
@@ -103,7 +104,7 @@ export default function AdminView() {
       .or(orQuery);
 
     if (errFetch) {
-      alert("Error al verificar duplicados: " + errFetch.message);
+      toast.error("Error al verificar duplicados: " + errFetch.message);
       setLoading(false);
       return;
     }
@@ -123,7 +124,7 @@ export default function AdminView() {
     });
 
     if (finalContactos.length === 0) {
-       alert(`No se importó ningún contacto.\n\nTodos los registros válidos (${validContactos.length}) ya existían en la base de datos (por teléfono o email).`);
+       toast.error(`No se importó nada.\nLos ${validContactos.length} contactos válidos ya existían en la DB.`, { duration: 5000 });
        setLoading(false);
        return;
     }
@@ -132,13 +133,13 @@ export default function AdminView() {
     const { error } = await supabase.from('contactos').insert(finalContactos);
     
     if (error) {
-      alert("Error al importar en base de datos: " + error.message);
+      toast.error("Error al importar: " + error.message);
     } else {
-      let msg = `¡${finalContactos.length} contactos importados con éxito!`;
-      if (invalidosCount > 0) msg += `\n- ${invalidosCount} omitidos por formato inválido (teléfono debe tener 10 dígitos) o repetidos en el archivo.`;
-      if (dbDuplicadosCount > 0) msg += `\n- ${dbDuplicadosCount} omitidos por ya existir en la base de datos.`;
+      let msg = `¡${finalContactos.length} importados!`;
+      if (invalidosCount > 0) msg += `\n${invalidosCount} omitidos (inválidos/repetidos).`;
+      if (dbDuplicadosCount > 0) msg += `\n${dbDuplicadosCount} omitidos (ya existían).`;
       
-      alert(msg);
+      toast.success(msg, { duration: 6000 });
       setData([]);
       setActiveTab('nuevos');
     }

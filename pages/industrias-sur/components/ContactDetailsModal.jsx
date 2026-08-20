@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, CheckCircle, Clock, Trash2, Save, History, Building2, Phone, MapPin, FileText, Loader2, Mail, UserPlus, Users } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medús'];
 
@@ -67,10 +68,11 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
     }).select();
     
     if (error) {
-      alert("Error al guardar persona: " + error.message);
+      toast.error("Error al guardar persona: " + error.message);
     } else {
       setPersonas([...personas, data[0]]);
       setNewPersona({ nombre: '', puesto: '', telefono: '', email: '' });
+      toast.success("Persona agregada exitosamente");
     }
     setSavingPersona(false);
   };
@@ -79,6 +81,9 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
     const { error } = await supabase.from('personas_contacto').delete().eq('id', id);
     if (!error) {
       setPersonas(personas.filter(p => p.id !== id));
+      toast.success("Persona eliminada");
+    } else {
+      toast.error("Error al eliminar persona: " + error.message);
     }
   };
 
@@ -121,8 +126,9 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
       .eq('id', contacto.id);
       
     if (error) {
-      alert("Error al actualizar la información: " + error.message);
+      toast.error("Error al actualizar la información: " + error.message);
     } else {
+      toast.success("Información actualizada");
       onRefresh(); // Refrescar vista padre por si cambiaron datos listados
     }
     setSavingInfo(false);

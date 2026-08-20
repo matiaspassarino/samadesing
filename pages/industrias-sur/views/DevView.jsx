@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Shield, Users, Database, Loader2, Save } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function DevView() {
   const [users, setUsers] = useState([]);
@@ -34,10 +35,11 @@ export default function DevView() {
     const { error } = await supabase.from('perfiles').update({ rol: newRole }).eq('id', userId);
     
     if (error) {
-      alert("Error al actualizar rol: " + error.message);
+      toast.error("Error al actualizar rol: " + error.message);
     } else {
       // Actualizar estado local
       setUsers(users.map(u => u.id === userId ? { ...u, rol: newRole } : u));
+      toast.success("Rol actualizado correctamente.");
     }
     setSavingId(null);
   };

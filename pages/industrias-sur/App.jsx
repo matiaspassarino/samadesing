@@ -7,6 +7,7 @@ import VendedorView from './views/VendedorView';
 import DevView from './views/DevView';
 import DevToolbar from './components/DevToolbar';
 import { Loader2, LogOut } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -114,6 +115,7 @@ export default function App() {
           </div>
         )}
       </main>
+      <Toaster position="top-right" toastOptions={{ className: 'text-sm font-medium rounded-xl border border-neutral-200' }} />
     </div>
   );
 }

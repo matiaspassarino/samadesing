@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Users, CheckSquare, Square, UserPlus, Loader2, Eye } from 'lucide-react';
 import ContactDetailsModal from '../components/ContactDetailsModal';
+import { toast } from 'react-hot-toast';
 
 export default function SupervisorView() {
   const [contactos, setContactos] = useState([]);
@@ -64,8 +65,9 @@ export default function SupervisorView() {
       .in('id', contactosIds);
 
     if (error) {
-      alert("Error al asignar: " + error.message);
+      toast.error("Error al asignar: " + error.message);
     } else {
+      toast.success(`${contactosIds.length} contactos asignados exitosamente.`);
       setSelectedContactos(new Set());
       setSelectedVendedor('');
       fetchData();
