@@ -270,26 +270,12 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 <Users className="text-primary-500" size={18} />
                 Personas Asociadas
               </h4>
-              
-              {/* Formulario Nueva Persona */}
-              <form onSubmit={handleAddPersona} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 mb-4">
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <input type="text" placeholder="Nombre completo" value={newPersona.nombre} onChange={e => setNewPersona({...newPersona, nombre: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" required />
-                  <input type="text" placeholder="Puesto (ej: Compras)" value={newPersona.puesto} onChange={e => setNewPersona({...newPersona, puesto: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
-                  <input type="text" placeholder="Teléfono" value={newPersona.telefono} onChange={e => setNewPersona({...newPersona, telefono: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
-                  <input type="email" placeholder="Email" value={newPersona.email} onChange={e => setNewPersona({...newPersona, email: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
-                </div>
-                <button type="submit" disabled={savingPersona} className="w-full bg-primary-100 hover:bg-primary-200 text-primary-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                  {savingPersona ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-                  Agregar Persona
-                </button>
-              </form>
 
-              {/* Lista de Personas */}
+              {/* Lista de Personas (MOVIDO ARRIBA) */}
               {loadingPersonas ? (
                  <div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>
               ) : personas.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-2 mb-4">
                   {personas.map(p => (
                     <div key={p.id} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
                       <div>
@@ -306,8 +292,22 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-neutral-500 text-center py-2 italic">No hay personas asociadas aún.</p>
+                <p className="text-sm text-neutral-500 text-center py-2 italic mb-4">No hay personas asociadas aún.</p>
               )}
+              
+              {/* Formulario Nueva Persona (MOVIDO ABAJO) */}
+              <form onSubmit={handleAddPersona} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200">
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <input type="text" placeholder="Nombre completo" value={newPersona.nombre} onChange={e => setNewPersona({...newPersona, nombre: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" required />
+                  <input type="text" placeholder="Puesto (ej: Compras)" value={newPersona.puesto} onChange={e => setNewPersona({...newPersona, puesto: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+                  <input type="text" placeholder="Teléfono" value={newPersona.telefono} onChange={e => setNewPersona({...newPersona, telefono: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+                  <input type="email" placeholder="Email" value={newPersona.email} onChange={e => setNewPersona({...newPersona, email: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+                </div>
+                <button type="submit" disabled={savingPersona} className="w-full bg-primary-100 hover:bg-primary-200 text-primary-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  {savingPersona ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                  Agregar Persona
+                </button>
+              </form>
             </div>
 
             {/* HISTORIAL / TRAZABILIDAD */}
