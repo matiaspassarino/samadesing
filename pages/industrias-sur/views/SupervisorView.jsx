@@ -4,7 +4,7 @@ import { Users, CheckSquare, Square, UserPlus, Loader2, Eye } from 'lucide-react
 import ContactDetailsModal from '../components/ContactDetailsModal';
 import { toast } from 'react-hot-toast';
 
-export default function SupervisorView() {
+export default function SupervisorView({ isDev }) {
   const [contactos, setContactos] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [selectedContactos, setSelectedContactos] = useState(new Set());
@@ -15,8 +15,24 @@ export default function SupervisorView() {
   // Para el modal
   const [contactoToView, setContactoToView] = useState(null);
 
+  const [mockContactos, setMockContactos] = useState([
+    { id: 'sc1', razon_social: 'Mockup S.A.', cuit: '30-11111111-2', provincia: 'Buenos Aires', fecha_actualizacion: new Date().toISOString() },
+    { id: 'sc2', razon_social: 'Distribuidora Falsa', cuit: '30-22222222-3', provincia: 'Córdoba', fecha_actualizacion: new Date().toISOString() },
+  ]);
+
   const fetchData = async () => {
     setLoading(true);
+    
+    if (isDev) {
+      setContactos(mockContactos);
+      setVendedores([
+        { id: 'v1', nombre_completo: 'Vendedor Mock 1', email: 'vendedor1@mock.com' },
+        { id: 'v2', nombre_completo: 'Vendedor Mock 2', email: 'vendedor2@mock.com' }
+      ]);
+      setLoading(false);
+      return;
+    }
+
     const [contactosRes, vendRes] = await Promise.all([
       supabase.from('contactos')
         .select('*')
@@ -33,7 +49,7 @@ export default function SupervisorView() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [isDev, mockContactos]);
 
   const toggleContacto = (id) => {
     const next = new Set(selectedContactos);
@@ -56,6 +72,16 @@ export default function SupervisorView() {
 
     const contactosIds = Array.from(selectedContactos);
     
+    if (isDev) {
+      // Mock assignment
+      setMockContactos(prev => prev.filter(c => !contactosIds.includes(c.id)));
+      toast.success(`Mockup: ${contactosIds.length} contactos asignados exitosamente.`);
+      setSelectedContactos(new Set());
+      setSelectedVendedor('');
+      setAssigning(false);
+      return;
+    }
+
     const { error } = await supabase
       .from('contactos')
       .update({ 
@@ -77,6 +103,12 @@ export default function SupervisorView() {
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
+      {isDev && (
+        <div className="mb-4 p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
+          Estás en MODO DEV. Los datos mostrados son de prueba (Mockup).
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-neutral-200 pb-4">
         <div>
           <h2 className="font-heading font-bold text-2xl text-neutral-800 flex items-center gap-2">
@@ -166,7 +198,7 @@ export default function SupervisorView() {
         <ContactDetailsModal 
           contacto={contactoToView} 
           onClose={() => setContactoToView(null)} 
-          onRefresh={fetchData} 
+          onRefresh={isDev ? () => setContactoToView(null) : fetchData} 
         />
       )}
     </div>

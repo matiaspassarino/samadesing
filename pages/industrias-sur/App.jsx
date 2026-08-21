@@ -104,9 +104,9 @@ export default function App() {
       {/* Renderizado condicional basado en el SIMULATED ROLE */}
       <main className="max-w-6xl mx-auto px-4 py-6 w-full flex-1">
         {simulatedRole === 'Dev' && <DevView />}
-        {simulatedRole === 'Administrador' && <AdminView />}
-        {simulatedRole === 'Supervisor' && <SupervisorView />}
-        {simulatedRole === 'Vendedor' && <VendedorView session={session} />}
+        {simulatedRole === 'Administrador' && <AdminView isDev={userRole === 'Dev'} />}
+        {simulatedRole === 'Supervisor' && <SupervisorView isDev={userRole === 'Dev'} />}
+        {simulatedRole === 'Vendedor' && <VendedorView session={session} isDev={userRole === 'Dev'} />}
         
         {/* Fallback */}
         {!['Dev', 'Administrador', 'Supervisor', 'Vendedor'].includes(simulatedRole) && (

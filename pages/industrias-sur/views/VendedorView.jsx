@@ -3,35 +3,64 @@ import { supabase } from '../lib/supabase';
 import TaskRow from '../components/TaskRow';
 import ResolutionModal from '../components/ResolutionModal';
 import ContactDetailsModal from '../components/ContactDetailsModal';
-import { Inbox, Briefcase, Calendar, Users, Loader2 } from 'lucide-react';
+import { Inbox, Users, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const TABS = [
   { id: 'bandeja', label: 'Bandeja', icon: Inbox },
-  { id: 'oportunidades', label: 'Oportunidades', icon: Briefcase },
-  { id: 'tareas', label: 'Tareas para Hoy', icon: Calendar },
   { id: 'clientes', label: 'Clientes', icon: Users },
 ];
 
-export default function VendedorView({ session }) {
-  const [activeTab, setActiveTab] = useState('tareas');
-  const [data, setData] = useState([]);
+export default function VendedorView({ session, isDev }) {
+  const [activeTab, setActiveTab] = useState('bandeja');
+  
+  // States to hold the split data for the new layout
+  const [tareas, setTareas] = useState([]);
+  const [oportunidades, setOportunidades] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  
   const [loading, setLoading] = useState(true);
   
   const [selectedTask, setSelectedTask] = useState(null); // Tarea para completar (ResolutionModal)
   const [viewContact, setViewContact] = useState(null); // Contacto para ver detalles (ContactDetailsModal)
 
+  // Initial Mock Data State
+  const [mockData, setMockData] = useState({
+    tareas: [
+      { id: 'm1', isInteraction: true, lead_id: 'l1', leadName: 'Acme Corp', status: 'Rellamar', urgencyText: 'Vence hoy', badgeColor: 'bg-primary-50 text-primary-900' },
+      { id: 'm2', isInteraction: true, lead_id: 'l2', leadName: 'Global Industries', status: 'Diferido', urgencyText: 'Vence el 25 ago', badgeColor: 'bg-warning/20 text-warning' }
+    ],
+    oportunidades: [
+      { id: 'l3', isInteraction: false, lead_id: 'l3', leadName: 'Tech Solutions', status: 'Cotizado', urgencyText: 'Actualizado: 20/08/2026', badgeColor: 'bg-neutral-200 text-neutral-800' },
+      { id: 'l4', isInteraction: false, lead_id: 'l4', leadName: 'Retail Max', status: 'Rellamar', urgencyText: 'Actualizado: 19/08/2026', badgeColor: 'bg-neutral-200 text-neutral-800' }
+    ],
+    clientes: [
+      { id: 'l5', isInteraction: false, lead_id: 'l5', leadName: 'Industrias Sur', status: 'Venta', urgencyText: 'Actualizado: 10/08/2026', badgeColor: 'bg-primary-900 text-white' },
+      { id: 'l6', isInteraction: false, lead_id: 'l6', leadName: 'Mega Distribuidora', status: 'Recompra', urgencyText: 'Actualizado: 15/08/2026', badgeColor: 'bg-primary-900 text-white' }
+    ]
+  });
+
   const fetchTabData = async () => {
     setLoading(true);
     
-    if (activeTab === 'tareas') {
-      const { data: interacciones, error } = await supabase
+    if (isDev) {
+      setTareas(mockData.tareas);
+      setOportunidades(mockData.oportunidades);
+      setClientes(mockData.clientes);
+      setLoading(false);
+      return;
+    }
+
+    if (activeTab === 'bandeja') {
+      // 1. Fetch Tareas
+      const { data: interacciones, error: errInteracciones } = await supabase
         .from('interacciones_contactos')
         .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos (razon_social, estado_actual)`)
         .eq('completada', false)
         .order('fecha_vencimiento', { ascending: true });
 
-      if (!error && interacciones) {
-        const mapped = interacciones.map(t => {
+      if (!errInteracciones && interacciones) {
+        const mappedTareas = interacciones.map(t => {
           const dueDate = t.fecha_vencimiento ? new Date(t.fecha_vencimiento) : new Date();
           const isOverdue = dueDate < new Date();
           const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' });
@@ -49,50 +78,75 @@ export default function VendedorView({ session }) {
             badgeColor
           };
         });
-        setData(mapped);
+        setTareas(mappedTareas);
       }
-    } else {
-      let query = supabase.from('contactos').select('*').order('fecha_actualizacion', { ascending: false });
+
+      // 2. Fetch Oportunidades
+      let queryOportunidades = supabase.from('contactos')
+        .select('*')
+        .in('estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado'])
+        .order('fecha_actualizacion', { ascending: false });
       
-      if (session?.user?.id) {
-         query = query.eq('vendedor_id', session.user.id);
-      }
-
-      if (activeTab === 'bandeja') query = query.eq('estado_actual', 'Asignado');
-      else if (activeTab === 'oportunidades') query = query.in('estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado']);
-      else if (activeTab === 'clientes') query = query.in('estado_actual', ['Venta', 'Recompra']);
-
-      const { data: contactosData, error } = await query;
-      if (!error && contactosData) {
-        const mapped = contactosData.map(l => {
-          let badgeColor = 'bg-neutral-200 text-neutral-800';
-          if (l.estado_actual === 'Asignado') badgeColor = 'bg-success/20 text-success';
-          if (l.estado_actual === 'Venta') badgeColor = 'bg-primary-900 text-white';
-
-          return {
+      if (session?.user?.id) queryOportunidades = queryOportunidades.eq('vendedor_id', session.user.id);
+      
+      const { data: opsData, error: errOps } = await queryOportunidades;
+      if (!errOps && opsData) {
+        const mappedOps = opsData.map(l => ({
             id: l.id,
             isInteraction: false,
             lead_id: l.id,
             leadName: l.razon_social,
             status: l.estado_actual,
             urgencyText: `Actualizado: ${new Date(l.fecha_actualizacion).toLocaleDateString('es-AR')}`,
-            badgeColor
-          };
-        });
-        setData(mapped);
+            badgeColor: 'bg-neutral-200 text-neutral-800'
+        }));
+        setOportunidades(mappedOps);
+      }
+    } else if (activeTab === 'clientes') {
+      let queryClientes = supabase.from('contactos')
+        .select('*')
+        .in('estado_actual', ['Venta', 'Recompra'])
+        .order('fecha_actualizacion', { ascending: false });
+      
+      if (session?.user?.id) queryClientes = queryClientes.eq('vendedor_id', session.user.id);
+      
+      const { data: clData, error: errCl } = await queryClientes;
+      if (!errCl && clData) {
+        const mappedCl = clData.map(l => ({
+            id: l.id,
+            isInteraction: false,
+            lead_id: l.id,
+            leadName: l.razon_social,
+            status: l.estado_actual,
+            urgencyText: `Actualizado: ${new Date(l.fecha_actualizacion).toLocaleDateString('es-AR')}`,
+            badgeColor: 'bg-primary-900 text-white'
+        }));
+        setClientes(mappedCl);
       }
     }
+    
     setLoading(false);
   };
 
   useEffect(() => {
     fetchTabData();
-  }, [activeTab]);
+  }, [activeTab, isDev, mockData]);
 
   const handleActionClick = (item) => setSelectedTask(item);
 
   const handleViewDetails = async (item) => {
-    // Buscar la data completa del contacto para el Modal
+    if (isDev) {
+      setViewContact({
+        id: item.lead_id,
+        razon_social: item.leadName,
+        estado_actual: item.status,
+        email: 'contacto@mockup.com',
+        telefono: '11 2345-6789',
+        notas: 'Esta es una nota de prueba generada en el entorno Dev (Mockup).',
+      });
+      return;
+    }
+
     const { data: contactoData } = await supabase.from('contactos').select('*').eq('id', item.lead_id).single();
     if (contactoData) {
       setViewContact(contactoData);
@@ -100,6 +154,41 @@ export default function VendedorView({ session }) {
   };
 
   const handleSaveResolution = async (resolutionData) => {
+    if (isDev) {
+      // Mock Data Update
+      let newTareas = [...mockData.tareas];
+      let newOps = [...mockData.oportunidades];
+      let newClientes = [...mockData.clientes];
+
+      const tIdx = newTareas.findIndex(t => t.id === selectedTask.id);
+      if (tIdx >= 0) newTareas.splice(tIdx, 1);
+
+      const oIdx = newOps.findIndex(t => t.id === selectedTask.id);
+      if (oIdx >= 0) {
+        // If it was an opportunity and became a sale, move it to clients
+        if (resolutionData.option === 'exit') {
+          const toMove = newOps[oIdx];
+          newOps.splice(oIdx, 1);
+          newClientes.push({ ...toMove, status: 'Venta', badgeColor: 'bg-primary-900 text-white' });
+        } else {
+           // Otherwise just remove or update. We'll simplify and remove.
+           newOps.splice(oIdx, 1);
+        }
+      }
+
+      setMockData(prev => ({
+        ...prev,
+        tareas: newTareas,
+        oportunidades: newOps,
+        clientes: newClientes
+      }));
+
+      toast.success("Mockup: Resolución guardada localmente");
+      setSelectedTask(null);
+      return;
+    }
+
+    // DB Update
     if (selectedTask.isInteraction) {
       await supabase.from('interacciones_contactos').update({ completada: true, notas: resolutionData.notes }).eq('id', selectedTask.id);
     }
@@ -133,6 +222,12 @@ export default function VendedorView({ session }) {
 
   return (
     <div>
+      {isDev && (
+        <div className="mb-4 p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
+          Estás en MODO DEV. Los datos mostrados son de prueba (Mockup) y no afectan a la base de datos real.
+        </div>
+      )}
+
       <div className="flex overflow-x-auto bg-white rounded-xl shadow-sm border border-neutral-200 mb-6 p-2 gap-2 hide-scrollbar">
         {TABS.map(tab => {
           const Icon = tab.icon;
@@ -152,24 +247,67 @@ export default function VendedorView({ session }) {
         })}
       </div>
 
-      <div className="flex flex-col gap-3">
-        {loading ? (
-          <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
-        ) : data.length === 0 ? (
-          <div className="text-center p-12 bg-white rounded-xl border border-neutral-200 shadow-sm">
-            <p className="text-neutral-500">No hay registros en esta vista.</p>
+      {loading ? (
+        <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
+      ) : activeTab === 'bandeja' ? (
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Main Block: Tareas para Hoy */}
+          <div className="flex-1 flex flex-col gap-3">
+            <h3 className="font-semibold text-neutral-800 mb-2">Tareas para Hoy</h3>
+            {tareas.length === 0 ? (
+              <div className="text-center p-8 bg-white rounded-xl border border-neutral-200 shadow-sm">
+                <p className="text-neutral-500">No hay tareas pendientes para hoy.</p>
+              </div>
+            ) : (
+              tareas.map(item => (
+                <TaskRow 
+                  key={item.id} 
+                  task={item} 
+                  onComplete={() => handleActionClick(item)}
+                  onViewDetails={() => handleViewDetails(item)}
+                />
+              ))
+            )}
           </div>
-        ) : (
-          data.map(item => (
-            <TaskRow 
-              key={item.id} 
-              task={item} 
-              onComplete={() => handleActionClick(item)}
-              onViewDetails={() => handleViewDetails(item)}
-            />
-          ))
-        )}
-      </div>
+          
+          {/* Side Column: Oportunidades */}
+          <div className="w-full md:w-96 flex flex-col gap-3">
+            <h3 className="font-semibold text-neutral-800 mb-2">Oportunidades (Pendientes)</h3>
+            {oportunidades.length === 0 ? (
+              <div className="text-center p-8 bg-white rounded-xl border border-neutral-200 shadow-sm">
+                <p className="text-neutral-500">No hay oportunidades pendientes.</p>
+              </div>
+            ) : (
+              oportunidades.map(item => (
+                <TaskRow 
+                  key={item.id} 
+                  task={item} 
+                  onComplete={() => handleActionClick(item)}
+                  onViewDetails={() => handleViewDetails(item)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Clientes Tab */
+        <div className="flex flex-col gap-3">
+          {clientes.length === 0 ? (
+            <div className="text-center p-12 bg-white rounded-xl border border-neutral-200 shadow-sm">
+              <p className="text-neutral-500">No hay clientes registrados.</p>
+            </div>
+          ) : (
+            clientes.map(item => (
+              <TaskRow 
+                key={item.id} 
+                task={item} 
+                onComplete={() => handleActionClick(item)}
+                onViewDetails={() => handleViewDetails(item)}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {selectedTask && (
         <ResolutionModal 
@@ -183,7 +321,7 @@ export default function VendedorView({ session }) {
         <ContactDetailsModal 
           contacto={viewContact} 
           onClose={() => setViewContact(null)} 
-          onRefresh={fetchTabData} 
+          onRefresh={isDev ? () => setViewContact(null) : fetchTabData} 
         />
       )}
     </div>
