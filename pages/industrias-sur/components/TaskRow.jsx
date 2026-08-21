@@ -2,8 +2,10 @@ import React from 'react';
 import { Eye } from 'lucide-react';
 
 export default function TaskRow({ task, onComplete, onViewDetails, compact = false }) {
+  const bgClass = task.isOverdue ? 'bg-warning/5 border-warning/30' : 'bg-white border-neutral-200';
+  
   return (
-    <div className={`bg-white p-4 rounded-xl border border-neutral-200 hover:shadow-sm transition-shadow ${compact ? 'flex flex-col gap-3 items-start' : 'flex items-center gap-4'}`}>
+    <div className={`${bgClass} p-4 rounded-xl border hover:shadow-sm transition-shadow ${compact ? 'flex flex-col gap-3 items-start' : 'flex items-center gap-4'}`}>
       
       {/* Info Central */}
       <div className={`flex-1 min-w-0 ${compact ? 'w-full' : ''}`}>

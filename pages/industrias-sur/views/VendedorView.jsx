@@ -27,12 +27,13 @@ export default function VendedorView({ session, isDev }) {
   // Initial Mock Data State
   const [mockData, setMockData] = useState({
     tareas: [
-      { id: 'm1', isInteraction: true, lead_id: 'l1', leadName: 'Acme Corp', status: 'Rellamar', urgencyText: 'Vence hoy', badgeColor: 'bg-primary-50 text-primary-900' },
-      { id: 'm2', isInteraction: true, lead_id: 'l2', leadName: 'Global Industries', status: 'Diferido', urgencyText: 'Vence el 25 ago', badgeColor: 'bg-warning/20 text-warning' }
+      { id: 'm0', isInteraction: false, lead_id: 'l0', leadName: 'Nuevo Lead SA', status: 'Nuevo Asignado', urgencyText: 'Requiere primer contacto', badgeColor: 'bg-success/20 text-success', isOverdue: false },
+      { id: 'm1', isInteraction: true, lead_id: 'l1', leadName: 'Acme Corp', status: 'Rellamar', urgencyText: 'Vencida', badgeColor: 'bg-primary-50 text-primary-900', isOverdue: true },
+      { id: 'm2', isInteraction: true, lead_id: 'l2', leadName: 'Global Industries', status: 'Diferido', urgencyText: 'Vence hoy', badgeColor: 'bg-warning/20 text-warning', isOverdue: false }
     ],
     oportunidades: [
-      { id: 'l3', isInteraction: false, lead_id: 'l3', leadName: 'Tech Solutions', status: 'Cotizado', urgencyText: 'Actualizado: 20/08/2026', badgeColor: 'bg-neutral-200 text-neutral-800' },
-      { id: 'l4', isInteraction: false, lead_id: 'l4', leadName: 'Retail Max', status: 'Rellamar', urgencyText: 'Actualizado: 19/08/2026', badgeColor: 'bg-neutral-200 text-neutral-800' }
+      { id: 'm3', isInteraction: true, lead_id: 'l3', leadName: 'Tech Solutions', status: 'Cotizado', urgencyText: 'Vence el 25 ago', badgeColor: 'bg-neutral-200 text-neutral-800', isOverdue: false },
+      { id: 'm4', isInteraction: true, lead_id: 'l4', leadName: 'Retail Max', status: 'Rellamar', urgencyText: 'Vence el 26 ago', badgeColor: 'bg-neutral-200 text-neutral-800', isOverdue: false }
     ],
     clientes: [
       { id: 'l5', isInteraction: false, lead_id: 'l5', leadName: 'Industrias Sur', status: 'Venta', urgencyText: 'Actualizado: 10/08/2026', badgeColor: 'bg-primary-900 text-white' },
@@ -52,56 +53,75 @@ export default function VendedorView({ session, isDev }) {
     }
 
     if (activeTab === 'bandeja') {
-      // 1. Fetch Tareas
-      const { data: interacciones, error: errInteracciones } = await supabase
-        .from('interacciones_contactos')
-        .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos (razon_social, estado_actual)`)
-        .eq('completada', false)
-        .order('fecha_vencimiento', { ascending: true });
+      let nuevasTareas = [];
+      let nuevasOportunidades = [];
 
-      if (!errInteracciones && interacciones) {
-        const mappedTareas = interacciones.map(t => {
+      // 1. Fetch nuevos asignados (Tareas para Hoy)
+      let queryNuevos = supabase.from('contactos').select('*').eq('estado_actual', 'Asignado');
+      if (session?.user?.id) queryNuevos = queryNuevos.eq('vendedor_id', session.user.id);
+      
+      const { data: nuevosData } = await queryNuevos;
+      if (nuevosData) {
+        nuevasTareas = nuevosData.map(c => ({
+          id: `new-${c.id}`,
+          isInteraction: false,
+          lead_id: c.id,
+          leadName: c.razon_social,
+          status: 'Nuevo Asignado',
+          urgencyText: 'Requiere primer contacto',
+          badgeColor: 'bg-success/20 text-success',
+          isOverdue: false
+        }));
+      }
+
+      // 2. Fetch interacciones pendientes
+      let queryInteracciones = supabase
+        .from('interacciones_contactos')
+        .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos!inner(razon_social, estado_actual, vendedor_id)`)
+        .eq('completada', false)
+        .in('contactos.estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado', 'Asignado']);
+        
+      if (session?.user?.id) queryInteracciones = queryInteracciones.eq('contactos.vendedor_id', session.user.id);
+
+      const { data: interaccionesData } = await queryInteracciones;
+      
+      if (interaccionesData) {
+        interaccionesData.forEach(t => {
           const dueDate = t.fecha_vencimiento ? new Date(t.fecha_vencimiento) : new Date();
-          const isOverdue = dueDate < new Date();
-          const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' });
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const dueDay = new Date(dueDate);
+          dueDay.setHours(0,0,0,0);
           
+          const isOverdue = dueDay < today;
+          const isTodayOrPast = dueDay <= today;
+
+          const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' });
           let badgeColor = 'bg-primary-50 text-primary-900';
           if (t.contactos?.estado_actual === 'Diferido') badgeColor = 'bg-warning/20 text-warning';
 
-          return {
+          const mapped = {
             id: t.id,
             isInteraction: true,
             lead_id: t.contacto_id,
             leadName: t.contactos?.razon_social || 'Desconocido',
-            status: t.contactos?.estado_actual,
-            urgencyText: isOverdue ? 'Vencida' : `Vence el ${formatter.format(dueDate)}`,
-            badgeColor
+            status: t.contactos?.estado_actual || t.tipo_accion,
+            urgencyText: isOverdue ? 'Vencida' : (dueDay.getTime() === today.getTime() ? 'Vence hoy' : `Vence el ${formatter.format(dueDate)}`),
+            badgeColor,
+            isOverdue
           };
-        });
-        setTareas(mappedTareas);
-      }
 
-      // 2. Fetch Oportunidades
-      let queryOportunidades = supabase.from('contactos')
-        .select('*')
-        .in('estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado'])
-        .order('fecha_actualizacion', { ascending: false });
-      
-      if (session?.user?.id) queryOportunidades = queryOportunidades.eq('vendedor_id', session.user.id);
-      
-      const { data: opsData, error: errOps } = await queryOportunidades;
-      if (!errOps && opsData) {
-        const mappedOps = opsData.map(l => ({
-            id: l.id,
-            isInteraction: false,
-            lead_id: l.id,
-            leadName: l.razon_social,
-            status: l.estado_actual,
-            urgencyText: `Actualizado: ${new Date(l.fecha_actualizacion).toLocaleDateString('es-AR')}`,
-            badgeColor: 'bg-neutral-200 text-neutral-800'
-        }));
-        setOportunidades(mappedOps);
+          if (isTodayOrPast) {
+            nuevasTareas.push(mapped);
+          } else {
+            nuevasOportunidades.push(mapped);
+          }
+        });
       }
+      
+      setTareas(nuevasTareas);
+      setOportunidades(nuevasOportunidades);
+      
     } else if (activeTab === 'clientes') {
       let queryClientes = supabase.from('contactos')
         .select('*')
@@ -165,13 +185,11 @@ export default function VendedorView({ session, isDev }) {
 
       const oIdx = newOps.findIndex(t => t.id === selectedTask.id);
       if (oIdx >= 0) {
-        // If it was an opportunity and became a sale, move it to clients
         if (resolutionData.option === 'exit') {
           const toMove = newOps[oIdx];
           newOps.splice(oIdx, 1);
           newClientes.push({ ...toMove, status: 'Venta', badgeColor: 'bg-primary-900 text-white' });
         } else {
-           // Otherwise just remove or update. We'll simplify and remove.
            newOps.splice(oIdx, 1);
         }
       }
@@ -191,6 +209,15 @@ export default function VendedorView({ session, isDev }) {
     // DB Update
     if (selectedTask.isInteraction) {
       await supabase.from('interacciones_contactos').update({ completada: true, notas: resolutionData.notes }).eq('id', selectedTask.id);
+    } else {
+      // Registrar primer contacto si era un Asignado sin interacciones previas
+      await supabase.from('interacciones_contactos').insert({
+        contacto_id: selectedTask.lead_id,
+        tipo_accion: 'Primer Contacto',
+        resultado: resolutionData.option,
+        notas: resolutionData.notes,
+        completada: true
+      });
     }
 
     let nuevoEstado = '';
@@ -201,7 +228,7 @@ export default function VendedorView({ session, isDev }) {
       case 'exit': nuevoEstado = 'Venta'; break;
       case 'rellamar': nuevoEstado = 'Rellamar'; nuevaAccion = 'Llamada Vendedor'; nuevaFechaVenc.setDate(nuevaFechaVenc.getDate() + 1); break;
       case 'diferido': nuevoEstado = 'Diferido'; nuevaAccion = 'Seguimiento Vendedor'; nuevaFechaVenc = new Date(resolutionData.deferDate); break;
-      case 'fallido': nuevoEstado = 'Perdido'; break;
+      case 'fallido': nuevoEstado = 'Descartado'; break; // Admin db perdidos
     }
 
     if (nuevoEstado) {
