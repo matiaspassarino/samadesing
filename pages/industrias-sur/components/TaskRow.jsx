@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
 
-export default function TaskRow({ task, onComplete, onViewDetails, compact = false }) {
+export default function TaskRow({ task, onComplete, onViewDetails, compact = false, actionText = "COMPLETAR" }) {
   const bgClass = task.isOverdue ? 'bg-warning/5 border-warning/30' : 'bg-white border-neutral-200';
   
   return (
@@ -35,7 +35,7 @@ export default function TaskRow({ task, onComplete, onViewDetails, compact = fal
           onClick={onComplete}
           className={`bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm ${compact ? 'flex-1' : 'flex-shrink-0'}`}
         >
-          COMPLETAR
+          {actionText}
         </button>
       </div>
     </div>

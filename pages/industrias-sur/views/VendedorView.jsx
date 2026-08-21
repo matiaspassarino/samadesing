@@ -79,7 +79,7 @@ export default function VendedorView({ session, isDev }) {
         .from('interacciones_contactos')
         .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos!inner(razon_social, estado_actual, vendedor_id)`)
         .eq('completada', false)
-        .in('contactos.estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado', 'Asignado']);
+        .in('contactos.estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado', 'Asignado', 'Venta', 'Recompra']);
         
       if (session?.user?.id) queryInteracciones = queryInteracciones.eq('contactos.vendedor_id', session.user.id);
 
@@ -231,6 +231,16 @@ export default function VendedorView({ session, isDev }) {
       case 'fallido': nuevoEstado = 'Descartado'; break; // Admin db perdidos
     }
 
+    const isClient = selectedTask.status === 'Venta' || selectedTask.status === 'Recompra';
+    if (isClient) {
+      if (nuevoEstado === 'Diferido' || nuevoEstado === 'Rellamar') {
+        nuevoEstado = selectedTask.status; // Keep it as Venta or Recompra
+      }
+      if (nuevoEstado === 'Venta') {
+        nuevoEstado = 'Recompra';
+      }
+    }
+
     if (nuevoEstado) {
       await supabase.from('contactos').update({ estado_actual: nuevoEstado }).eq('id', selectedTask.lead_id);
     }
@@ -329,6 +339,7 @@ export default function VendedorView({ session, isDev }) {
               <TaskRow 
                 key={item.id} 
                 task={item} 
+                actionText="CONTACTAR"
                 onComplete={() => handleActionClick(item)}
                 onViewDetails={() => handleViewDetails(item)}
               />
