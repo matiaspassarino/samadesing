@@ -411,6 +411,7 @@ export default function AdminView({ isDev }) {
           contacto={selectedContacto} 
           onClose={() => setSelectedContacto(null)} 
           onRefresh={isDev ? () => setSelectedContacto(null) : fetchContactos} 
+          userRole="Admin"
         />
       )}
     </div>

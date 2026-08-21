@@ -199,6 +199,7 @@ export default function SupervisorView({ isDev }) {
           contacto={contactoToView} 
           onClose={() => setContactoToView(null)} 
           onRefresh={isDev ? () => setContactoToView(null) : fetchData} 
+          userRole="Supervisor"
         />
       )}
     </div>

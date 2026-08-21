@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 
 const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medús'];
 
-export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
+export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin' }) {
   // Estados para la info del contacto
   const [formData, setFormData] = useState({
     razon_social: contacto.razon_social || '',
@@ -192,7 +192,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
           
           {/* LEFT COLUMN: INFO & HISTORIAL */}
-          <div className="lg:w-3/5 border-r border-neutral-200 flex flex-col overflow-y-auto bg-white p-6">
+          <div className={`${userRole === 'Admin' ? 'lg:w-3/5 border-r' : 'w-full'} border-neutral-200 flex flex-col overflow-y-auto bg-white p-6`}>
             
             <div className="flex justify-between items-center mb-4">
               <h4 className="font-bold text-neutral-800 flex items-center gap-2">
@@ -277,7 +277,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 Personas Asociadas
               </h4>
 
-              {/* Lista de Personas (MOVIDO ARRIBA) */}
+              {/* Lista de Personas */}
               {loadingPersonas ? (
                  <div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>
               ) : personas.length > 0 ? (
@@ -301,9 +301,9 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
                 <p className="text-sm text-neutral-500 text-center py-2 italic mb-4">No hay personas asociadas aún.</p>
               )}
               
-              {/* Formulario Nueva Persona (MOVIDO ABAJO) */}
+              {/* Formulario Nueva Persona */}
               <form onSubmit={handleAddPersona} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200">
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <input type="text" placeholder="Nombre completo" value={newPersona.nombre} onChange={e => setNewPersona({...newPersona, nombre: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" required />
                   <input type="text" placeholder="Puesto (ej: Compras)" value={newPersona.puesto} onChange={e => setNewPersona({...newPersona, puesto: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
                   <input type="text" placeholder="Teléfono" value={newPersona.telefono} onChange={e => setNewPersona({...newPersona, telefono: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
@@ -364,70 +364,72 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh }) {
           </div>
 
           {/* RIGHT COLUMN: ACTION FORM */}
-          <div className="lg:w-2/5 bg-neutral-50 p-6 flex flex-col">
-            <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-6">
-              <Phone className="text-primary-500" size={18} />
-              Registrar Interacción
-            </h4>
-            
-            <form onSubmit={handleSubmitInteraction} className="flex flex-col flex-1">
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-neutral-700 mb-3">
-                  Resultado
-                </label>
-                <div className="flex flex-col gap-3">
-                  <label className={`
-                    group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'exitoso' ? 'border-green-500 bg-green-500 text-white' : 'border-neutral-200 bg-white hover:bg-green-500 hover:border-green-500 hover:text-white text-neutral-700'}
-                  `}>
-                    <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                    <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
-                    <span className="font-semibold text-sm">Contacto Exitoso (Pasar a Sup.)</span>
+          {userRole === 'Admin' && (
+            <div className="lg:w-2/5 bg-neutral-50 p-6 flex flex-col">
+              <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-6">
+                <Phone className="text-primary-500" size={18} />
+                Registrar Interacción
+              </h4>
+              
+              <form onSubmit={handleSubmitInteraction} className="flex flex-col flex-1">
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-neutral-700 mb-3">
+                    Resultado
                   </label>
+                  <div className="flex flex-col gap-3">
+                    <label className={`
+                      group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                      ${resultado === 'exitoso' ? 'border-green-500 bg-green-500 text-white' : 'border-neutral-200 bg-white hover:bg-green-500 hover:border-green-500 hover:text-white text-neutral-700'}
+                    `}>
+                      <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
+                      <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+                      <span className="font-semibold text-sm">Contacto Exitoso (Pasar a Sup.)</span>
+                    </label>
 
-                  <label className={`
-                    group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'rellamar' ? 'border-yellow-500 bg-yellow-500 text-white' : 'border-neutral-200 bg-white hover:bg-yellow-500 hover:border-yellow-500 hover:text-white text-neutral-700'}
-                  `}>
-                    <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                    <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
-                    <span className="font-semibold text-sm">No Atiende / Rellamar</span>
-                  </label>
+                    <label className={`
+                      group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                      ${resultado === 'rellamar' ? 'border-yellow-500 bg-yellow-500 text-white' : 'border-neutral-200 bg-white hover:bg-yellow-500 hover:border-yellow-500 hover:text-white text-neutral-700'}
+                    `}>
+                      <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
+                      <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+                      <span className="font-semibold text-sm">No Atiende / Rellamar</span>
+                    </label>
 
-                  <label className={`
-                    group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                    ${resultado === 'descartar' ? 'border-red-500 bg-red-500 text-white' : 'border-neutral-200 bg-white hover:bg-red-500 hover:border-red-500 hover:text-white text-neutral-700'}
-                  `}>
-                    <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                    <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
-                    <span className="font-semibold text-sm">Descartar (Perdido)</span>
-                  </label>
+                    <label className={`
+                      group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                      ${resultado === 'descartar' ? 'border-red-500 bg-red-500 text-white' : 'border-neutral-200 bg-white hover:bg-red-500 hover:border-red-500 hover:text-white text-neutral-700'}
+                    `}>
+                      <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
+                      <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+                      <span className="font-semibold text-sm">Descartar (Perdido)</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-6 flex-1 flex flex-col">
-                <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                  Comentarios de la gestión
-                </label>
-                <textarea 
-                  className="w-full flex-1 bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none min-h-[120px]"
-                  placeholder="Detalles de la charla, por qué no contestó o razones del descarte..."
-                  value={comentarios}
-                  onChange={(e) => setComentarios(e.target.value)}
-                  required
-                ></textarea>
-              </div>
+                <div className="mb-6 flex-1 flex flex-col">
+                  <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                    Comentarios de la gestión
+                  </label>
+                  <textarea 
+                    className="w-full flex-1 bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none min-h-[120px]"
+                    placeholder="Detalles de la charla, por qué no contestó o razones del descarte..."
+                    value={comentarios}
+                    onChange={(e) => setComentarios(e.target.value)}
+                    required
+                  ></textarea>
+                </div>
 
-              <button 
-                type="submit"
-                disabled={savingInteraction || !comentarios.trim()}
-                className="w-full py-3.5 rounded-xl font-bold bg-primary-500 hover:bg-primary-900 text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {savingInteraction ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                Guardar Interacción
-              </button>
-            </form>
-          </div>
+                <button 
+                  type="submit"
+                  disabled={savingInteraction || !comentarios.trim()}
+                  className="w-full py-3.5 rounded-xl font-bold bg-primary-500 hover:bg-primary-900 text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {savingInteraction ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                  Guardar Interacción
+                </button>
+              </form>
+            </div>
+          )}
 
         </div>
       </div>

@@ -350,6 +350,7 @@ export default function VendedorView({ session, isDev }) {
           contacto={viewContact} 
           onClose={() => setViewContact(null)} 
           onRefresh={isDev ? () => setViewContact(null) : fetchTabData} 
+          userRole="Vendedor"
         />
       )}
     </div>
