@@ -180,28 +180,50 @@ export default function VendedorView({ session, isDev }) {
       let newOps = [...mockData.oportunidades];
       let newClientes = [...mockData.clientes];
 
-      const tIdx = newTareas.findIndex(t => t.id === selectedTask.id);
-      if (tIdx >= 0) newTareas.splice(tIdx, 1);
+      // Buscar el origen
+      let sourceList = null;
+      let sourceIdx = -1;
 
-      const oIdx = newOps.findIndex(t => t.id === selectedTask.id);
-      if (oIdx >= 0) {
+      if ((sourceIdx = newTareas.findIndex(t => t.id === selectedTask.id)) >= 0) {
+        sourceList = newTareas;
+      } else if ((sourceIdx = newOps.findIndex(t => t.id === selectedTask.id)) >= 0) {
+        sourceList = newOps;
+      } else if ((sourceIdx = newClientes.findIndex(t => t.id === selectedTask.id)) >= 0) {
+        sourceList = newClientes;
+      }
+
+      if (sourceList && sourceIdx >= 0) {
+        const item = sourceList[sourceIdx];
+        sourceList.splice(sourceIdx, 1); // Remover del origen
+
+        const isClient = item.status === 'Venta' || item.status === 'Recompra';
+
         if (resolutionData.option === 'exit') {
-          const toMove = newOps[oIdx];
-          newOps.splice(oIdx, 1);
-          newClientes.push({ ...toMove, status: 'Venta', badgeColor: 'bg-primary-900 text-white' });
-        } else {
-           newOps.splice(oIdx, 1);
+          const nuevoEstado = isClient ? 'Recompra' : 'Venta';
+          newClientes.push({ ...item, status: nuevoEstado, badgeColor: 'bg-primary-900 text-white', urgencyText: 'Cliente Activo', isOverdue: false });
+        } else if (resolutionData.option === 'rellamar') {
+          if (isClient) {
+            newClientes.push({ ...item, urgencyText: 'Llamada agendada (mañana)', isOverdue: false });
+          } else {
+            newOps.push({ ...item, status: 'Rellamar', badgeColor: 'bg-neutral-200 text-neutral-800', urgencyText: 'Vence mañana', isOverdue: false });
+          }
+        } else if (resolutionData.option === 'diferido') {
+          if (isClient) {
+            newClientes.push({ ...item, urgencyText: `Llamada agendada (${resolutionData.deferDate})`, isOverdue: false });
+          } else {
+            newOps.push({ ...item, status: 'Diferido', badgeColor: 'bg-warning/20 text-warning', urgencyText: `Vence el ${resolutionData.deferDate}`, isOverdue: false });
+          }
+        } else if (resolutionData.option === 'fallido') {
+          if (isClient) {
+            // Un cliente que falló un contacto (no atiende o no quiere recomprar), sigue siendo cliente en este flujo básico.
+            newClientes.push({ ...item, urgencyText: 'Último contacto fallido' });
+          }
+          // Si no era cliente, se "descarta", es decir, no se pushea a ninguna lista local.
         }
       }
 
-      setMockData(prev => ({
-        ...prev,
-        tareas: newTareas,
-        oportunidades: newOps,
-        clientes: newClientes
-      }));
-
-      toast.success("Mockup: Resolución guardada localmente");
+      setMockData({ tareas: newTareas, oportunidades: newOps, clientes: newClientes });
+      toast.success("Mockup: Resolución simulada exitosamente");
       setSelectedTask(null);
       return;
     }
