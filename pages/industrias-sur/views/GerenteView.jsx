@@ -47,19 +47,19 @@ export default function GerenteView({ isDev }) {
         else if (rand > 0.2) estado = 'Supervisor';
         else estado = 'Rellamar';
 
-        const uen = ['Industrias Sur', 'Aries', 'Med鷖'][Math.floor(Math.random() * 3)];
-        const provincia = ['Buenos Aires', 'C髍doba', 'Santa Fe', 'Mendoza'][Math.floor(Math.random() * 4)];
+        const uen = ['Industrias Sur', 'Aries', 'Med煤s'][Math.floor(Math.random() * 3)];
+        const provincia = ['Buenos Aires', 'C贸rdoba', 'Santa Fe', 'Mendoza'][Math.floor(Math.random() * 4)];
         
         // Random date in last 60 days
         const date = new Date();
         date.setDate(date.getDate() - Math.floor(Math.random() * 60));
 
         return {
-          id: \c\\,
+          id: `c${i}`,
           estado_actual: estado,
           unidad_negocio: uen,
           provincia: provincia,
-          vendedor_id: estado !== 'Nuevo' && estado !== 'Supervisor' ? \\\ : null,
+          vendedor_id: estado !== 'Nuevo' && estado !== 'Supervisor' ? `v${Math.floor(Math.random() * 3)}` : null,
           fecha_creacion: date.toISOString()
         };
       });
@@ -74,12 +74,12 @@ export default function GerenteView({ isDev }) {
         const date = new Date();
         date.setDate(date.getDate() - Math.floor(Math.random() * 60));
         return {
-          id: \i\\,
-          contacto_id: \c\\,
+          id: `i${i}`,
+          contacto_id: `c${Math.floor(Math.random() * 150)}`,
           completada: Math.random() > 0.2, // 80% completadas
           fecha_creacion: date.toISOString(),
           fecha_vencimiento: date.toISOString(),
-          vendedor_id: \\\ // Simulaci髇 simplificada
+          vendedor_id: `v${Math.floor(Math.random() * 3)}` // Simulaci贸n simplificada
         };
       });
 
@@ -189,7 +189,7 @@ export default function GerenteView({ isDev }) {
     );
   }
 
-  // CONFIGURACI覰 DE GR罠ICOS
+  // CONFIGURACI脫N DE GR脕FICOS
   const funnelChartData = {
     labels: Object.keys(metrics.funnel),
     datasets: [{
@@ -231,7 +231,7 @@ export default function GerenteView({ isDev }) {
     <div className="space-y-6 animate-in fade-in duration-300">
       {isDev && (
         <div className="p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
-          Est醩 en MODO DEV. Los datos del dashboard son generados aleatoriamente (Mockup).
+          Est谩s en MODO DEV. Los datos del dashboard son generados aleatoriamente (Mockup).
         </div>
       )}
 
@@ -242,7 +242,7 @@ export default function GerenteView({ isDev }) {
             <TrendingUp className="text-primary-500" />
             Dashboard Gerencial
           </h2>
-          <p className="text-sm text-neutral-500">M閠ricas de rendimiento y conversi髇 globales.</p>
+          <p className="text-sm text-neutral-500">M茅tricas de rendimiento y conversi贸n globales.</p>
         </div>
         <div className="flex items-center gap-2 bg-neutral-50 p-1.5 rounded-xl border border-neutral-200">
           <Calendar size={16} className="text-neutral-400 ml-2" />
@@ -251,8 +251,8 @@ export default function GerenteView({ isDev }) {
             onChange={(e) => setTimeFilter(e.target.value)}
             className="bg-transparent border-none text-sm font-semibold text-neutral-700 py-1.5 pr-8 focus:ring-0 cursor-pointer outline-none"
           >
-            <option value="all">Hist髍ico Completo</option>
-            <option value="30days">趌timos 30 d韆s</option>
+            <option value="all">Hist贸rico Completo</option>
+            <option value="30days">脷ltimos 30 d铆as</option>
             <option value="month">Mes Actual</option>
           </select>
         </div>
@@ -272,7 +272,7 @@ export default function GerenteView({ isDev }) {
 
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-semibold text-neutral-500">Conversi髇 (Ventas)</h3>
+            <h3 className="text-sm font-semibold text-neutral-500">Conversi贸n (Ventas)</h3>
             <div className="p-2 bg-green-50 text-green-600 rounded-lg"><Target size={18} /></div>
           </div>
           <div className="flex items-end gap-2">
@@ -283,7 +283,7 @@ export default function GerenteView({ isDev }) {
 
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-200 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-sm font-semibold text-neutral-500">En Gesti髇 (Vendedores)</h3>
+            <h3 className="text-sm font-semibold text-neutral-500">En Gesti贸n (Vendedores)</h3>
             <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg"><TrendingUp size={18} /></div>
           </div>
           <div>
@@ -298,7 +298,7 @@ export default function GerenteView({ isDev }) {
           </div>
           <div>
             <p className="text-3xl font-bold text-neutral-800">{metrics.tareasVencidas}</p>
-            {metrics.tareasVencidas > 0 && <p className="text-xs text-red-500 font-medium mt-1">Requiere atenci髇</p>}
+            {metrics.tareasVencidas > 0 && <p className="text-xs text-red-500 font-medium mt-1">Requiere atenci贸n</p>}
           </div>
         </div>
       </div>
