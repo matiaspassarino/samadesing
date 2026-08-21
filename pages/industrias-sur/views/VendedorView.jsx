@@ -271,7 +271,7 @@ export default function VendedorView({ session, isDev }) {
           </div>
           
           {/* Side Column: Oportunidades */}
-          <div className="w-full md:w-96 flex flex-col gap-3">
+          <div className="w-full md:w-80 flex flex-col gap-3">
             <h3 className="font-semibold text-neutral-800 mb-2">Oportunidades (Pendientes)</h3>
             {oportunidades.length === 0 ? (
               <div className="text-center p-8 bg-white rounded-xl border border-neutral-200 shadow-sm">
@@ -282,6 +282,7 @@ export default function VendedorView({ session, isDev }) {
                 <TaskRow 
                   key={item.id} 
                   task={item} 
+                  compact={true}
                   onComplete={() => handleActionClick(item)}
                   onViewDetails={() => handleViewDetails(item)}
                 />
