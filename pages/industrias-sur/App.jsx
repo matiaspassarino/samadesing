@@ -5,6 +5,7 @@ import AdminView from './views/AdminView';
 import SupervisorView from './views/SupervisorView';
 import VendedorView from './views/VendedorView';
 import DevView from './views/DevView';
+import GerenteView from './views/GerenteView';
 import DevToolbar from './components/DevToolbar';
 import { Loader2, LogOut } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
@@ -107,9 +108,10 @@ export default function App() {
         {simulatedRole === 'Administrador' && <AdminView isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Supervisor' && <SupervisorView isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Vendedor' && <VendedorView session={session} isDev={userRole === 'Dev'} />}
+        {simulatedRole === 'Gerente' && <GerenteView isDev={userRole === 'Dev'} />}
         
         {/* Fallback */}
-        {!['Dev', 'Administrador', 'Supervisor', 'Vendedor'].includes(simulatedRole) && (
+        {!['Dev', 'Administrador', 'Supervisor', 'Vendedor', 'Gerente'].includes(simulatedRole) && (
           <div className="p-8 text-center text-danger bg-danger/10 rounded-xl font-medium border border-danger/20">
             Rol no reconocido. Contacta a soporte.
           </div>

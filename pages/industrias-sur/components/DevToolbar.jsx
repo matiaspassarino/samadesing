@@ -2,7 +2,7 @@ import React from 'react';
 import { Settings, Eye } from 'lucide-react';
 
 export default function DevToolbar({ simulatedRole, setSimulatedRole }) {
-  const ROLES = ['Dev', 'Administrador', 'Supervisor', 'Vendedor'];
+  const ROLES = ['Dev', 'Administrador', 'Supervisor', 'Vendedor', 'Gerente'];
 
   return (
     <div className="bg-neutral-900 text-neutral-100 px-4 py-2 flex items-center justify-between shadow-inner relative z-[60]">
