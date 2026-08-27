@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '../lib/supabase';
 import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2, Users } from 'lucide-react';
-import ContactDetailsModal from '../components/ContactDetailsModal';
+import ResolutionModal from '../components/ResolutionModal';
 import { toast } from 'react-hot-toast';
 
 export default function ProspectorView({ isDev }) {
