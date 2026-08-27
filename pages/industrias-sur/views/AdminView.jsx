@@ -15,12 +15,6 @@ export default function AdminView({ isDev }) {
   const [loadingContactos, setLoadingContactos] = useState(true);
   const [selectedContacto, setSelectedContacto] = useState(null);
 
-  const [mockContactos, setMockContactos] = useState({
-    nuevos: [{ id: 'a1', razon_social: 'Lead Nuevo Mock', telefono: '1112223334', provincia: 'CABA', fecha_creacion: new Date().toISOString() }],
-    recontactos: [{ id: 'a2', razon_social: 'Lead Recontacto Mock', telefono: '1112223335', provincia: 'GBA', fecha_creacion: new Date().toISOString() }],
-    perdidos: [{ id: 'a3', razon_social: 'Lead Perdido Mock', telefono: '1112223336', provincia: 'Mendoza', fecha_creacion: new Date().toISOString() }]
-  });
-
   // --- LÓGICA DE IMPORTACIÓN CSV ---
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -162,13 +156,6 @@ export default function AdminView({ isDev }) {
   // --- LÓGICA DE GESTIÓN DE CONTACTOS ---
   const fetchContactos = async () => {
     setLoadingContactos(true);
-    if (isDev) {
-      if (activeTab === 'nuevos') setContactos(mockContactos.nuevos);
-      else if (activeTab === 'recontactos') setContactos(mockContactos.recontactos);
-      else if (activeTab === 'perdidos') setContactos(mockContactos.perdidos);
-      setLoadingContactos(false);
-      return;
-    }
 
     let estadoQuery = [];
     if (activeTab === 'nuevos') estadoQuery = ['Nuevo'];
@@ -196,18 +183,6 @@ export default function AdminView({ isDev }) {
   }, [activeTab, isDev]);
 
   const handleReingresar = async (contacto) => {
-    if (isDev) {
-      toast.success("Mockup: Contacto reingresado");
-      setMockContactos(prev => {
-        const removed = prev.perdidos.find(c => c.id === contacto.id);
-        return {
-          ...prev,
-          perdidos: prev.perdidos.filter(c => c.id !== contacto.id),
-          nuevos: [...prev.nuevos, { ...removed, estado_actual: 'Nuevo' }]
-        };
-      });
-      return;
-    }
 
     const { error } = await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').update({ estado_actual: 'Nuevo' }).eq('id', contacto.id);
     if (!error) {
@@ -281,7 +256,7 @@ export default function AdminView({ isDev }) {
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
       {isDev && (
         <div className="mb-4 p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
-          Estás en MODO DEV. Los datos mostrados son de prueba (Mockup).
+          Estás conectado a la base de datos SANDBOX. Cambios aquí no afectan Producción.
         </div>
       )}
 

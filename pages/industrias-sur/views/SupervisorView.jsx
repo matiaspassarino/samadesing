@@ -15,23 +15,8 @@ export default function SupervisorView({ isDev }) {
   // Para el modal
   const [contactoToView, setContactoToView] = useState(null);
 
-  const [mockContactos, setMockContactos] = useState([
-    { id: 'sc1', razon_social: 'Mockup S.A.', cuit: '30-11111111-2', provincia: 'Buenos Aires', fecha_actualizacion: new Date().toISOString() },
-    { id: 'sc2', razon_social: 'Distribuidora Falsa', cuit: '30-22222222-3', provincia: 'Córdoba', fecha_actualizacion: new Date().toISOString() },
-  ]);
-
   const fetchData = async () => {
     setLoading(true);
-    
-    if (isDev) {
-      setContactos(mockContactos);
-      setVendedores([
-        { id: 'v1', nombre_completo: 'Vendedor Mock 1', email: 'vendedor1@mock.com' },
-        { id: 'v2', nombre_completo: 'Vendedor Mock 2', email: 'vendedor2@mock.com' }
-      ]);
-      setLoading(false);
-      return;
-    }
 
     const [contactosRes, vendRes] = await Promise.all([
       supabase.from(isDev ? 'contactos_sandbox' : 'contactos')
@@ -49,7 +34,7 @@ export default function SupervisorView({ isDev }) {
 
   useEffect(() => {
     fetchData();
-  }, [isDev, mockContactos]);
+  }, [isDev]);
 
   const toggleContacto = (id) => {
     const next = new Set(selectedContactos);
@@ -71,16 +56,6 @@ export default function SupervisorView({ isDev }) {
     setAssigning(true);
 
     const contactosIds = Array.from(selectedContactos);
-    
-    if (isDev) {
-      // Mock assignment
-      setMockContactos(prev => prev.filter(c => !contactosIds.includes(c.id)));
-      toast.success(`Mockup: ${contactosIds.length} contactos asignados exitosamente.`);
-      setSelectedContactos(new Set());
-      setSelectedVendedor('');
-      setAssigning(false);
-      return;
-    }
 
     const { error } = await supabase
       .from('contactos')
@@ -105,7 +80,7 @@ export default function SupervisorView({ isDev }) {
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
       {isDev && (
         <div className="mb-4 p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
-          Estás en MODO DEV. Los datos mostrados son de prueba (Mockup).
+          Estás conectado a la base de datos SANDBOX. Cambios aquí no afectan Producción.
         </div>
       )}
 

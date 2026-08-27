@@ -25,33 +25,8 @@ export default function VendedorView({ session, isDev }) {
   const [selectedTask, setSelectedTask] = useState(null); // Tarea para completar (ResolutionModal)
   const [viewContact, setViewContact] = useState(null); // Contacto para ver detalles (ContactDetailsModal)
 
-  // Initial Mock Data State
-  const [mockData, setMockData] = useState({
-    tareas: [
-      { id: 'm0', isInteraction: false, lead_id: 'l0', leadName: 'Nuevo Lead SA', status: 'Nuevo Asignado', urgencyText: 'Requiere primer contacto', badgeColor: 'bg-success/20 text-success', isOverdue: false },
-      { id: 'm1', isInteraction: true, lead_id: 'l1', leadName: 'Acme Corp', status: 'Rellamar', urgencyText: 'Vencida', badgeColor: 'bg-primary-50 text-primary-900', isOverdue: true },
-      { id: 'm2', isInteraction: true, lead_id: 'l2', leadName: 'Global Industries', status: 'Diferido', urgencyText: 'Vence hoy', badgeColor: 'bg-warning/20 text-warning', isOverdue: false }
-    ],
-    oportunidades: [
-      { id: 'm3', isInteraction: true, lead_id: 'l3', leadName: 'Tech Solutions', status: 'Cotizado', urgencyText: 'Vence el 25 ago', badgeColor: 'bg-neutral-200 text-neutral-800', isOverdue: false },
-      { id: 'm4', isInteraction: true, lead_id: 'l4', leadName: 'Retail Max', status: 'Rellamar', urgencyText: 'Vence el 26 ago', badgeColor: 'bg-neutral-200 text-neutral-800', isOverdue: false }
-    ],
-    clientes: [
-      { id: 'l5', isInteraction: false, lead_id: 'l5', leadName: 'Industrias Sur', status: 'Venta', urgencyText: 'Actualizado: 10/08/2026', badgeColor: 'bg-primary-900 text-white' },
-      { id: 'l6', isInteraction: false, lead_id: 'l6', leadName: 'Mega Distribuidora', status: 'Recompra', urgencyText: 'Actualizado: 15/08/2026', badgeColor: 'bg-primary-900 text-white' }
-    ]
-  });
-
   const fetchTabData = async () => {
     setLoading(true);
-    
-    if (isDev) {
-      setTareas(mockData.tareas);
-      setOportunidades(mockData.oportunidades);
-      setClientes(mockData.clientes);
-      setLoading(false);
-      return;
-    }
 
     if (activeTab === 'bandeja') {
       let nuevasTareas = [];
@@ -151,7 +126,7 @@ export default function VendedorView({ session, isDev }) {
 
   useEffect(() => {
     fetchTabData();
-  }, [activeTab, isDev, mockData]);
+  }, [activeTab, isDev]);
 
   const handleActionClick = (item) => setSelectedTask(item);
 
@@ -161,9 +136,9 @@ export default function VendedorView({ session, isDev }) {
         id: item.lead_id,
         razon_social: item.leadName,
         estado_actual: item.status,
-        email: 'contacto@mockup.com',
+        email: 'contacto@sandbox.com',
         telefono: '11 2345-6789',
-        notas: 'Esta es una nota de prueba generada en el entorno Dev (Mockup).',
+        notas: 'Esta es una nota de prueba generada en el Sandbox.',
       });
       return;
     }
@@ -186,59 +161,6 @@ export default function VendedorView({ session, isDev }) {
           return;
         }
       }
-    }
-    if (isDev) {
-      // Mock Data Update
-      let newTareas = [...mockData.tareas];
-      let newOps = [...mockData.oportunidades];
-      let newClientes = [...mockData.clientes];
-
-      // Buscar el origen
-      let sourceList = null;
-      let sourceIdx = -1;
-
-      if ((sourceIdx = newTareas.findIndex(t => t.id === selectedTask.id)) >= 0) {
-        sourceList = newTareas;
-      } else if ((sourceIdx = newOps.findIndex(t => t.id === selectedTask.id)) >= 0) {
-        sourceList = newOps;
-      } else if ((sourceIdx = newClientes.findIndex(t => t.id === selectedTask.id)) >= 0) {
-        sourceList = newClientes;
-      }
-
-      if (sourceList && sourceIdx >= 0) {
-        const item = sourceList[sourceIdx];
-        sourceList.splice(sourceIdx, 1); // Remover del origen
-
-        const isClient = item.status === 'Venta' || item.status === 'Recompra';
-
-        if (resolutionData.option === 'exit') {
-          const nuevoEstado = isClient ? 'Recompra' : 'Venta';
-          newClientes.push({ ...item, status: nuevoEstado, badgeColor: 'bg-primary-900 text-white', urgencyText: 'Cliente Activo', isOverdue: false });
-        } else if (resolutionData.option === 'rellamar') {
-          if (isClient) {
-            newClientes.push({ ...item, urgencyText: 'Llamada agendada (mañana)', isOverdue: false });
-          } else {
-            newOps.push({ ...item, status: 'Rellamar', badgeColor: 'bg-neutral-200 text-neutral-800', urgencyText: 'Vence mañana', isOverdue: false });
-          }
-        } else if (resolutionData.option === 'diferido') {
-          if (isClient) {
-            newClientes.push({ ...item, urgencyText: `Llamada agendada (${resolutionData.deferDate})`, isOverdue: false });
-          } else {
-            newOps.push({ ...item, status: 'Diferido', badgeColor: 'bg-warning/20 text-warning', urgencyText: `Vence el ${resolutionData.deferDate}`, isOverdue: false });
-          }
-        } else if (resolutionData.option === 'fallido') {
-          if (isClient) {
-            // Un cliente que falló un contacto (no atiende o no quiere recomprar), sigue siendo cliente en este flujo básico.
-            newClientes.push({ ...item, urgencyText: 'Último contacto fallido' });
-          }
-          // Si no era cliente, se "descarta", es decir, no se pushea a ninguna lista local.
-        }
-      }
-
-      setMockData({ tareas: newTareas, oportunidades: newOps, clientes: newClientes });
-      toast.success("Mockup: Resolución simulada exitosamente");
-      setSelectedTask(null);
-      return;
     }
 
     // DB Update
@@ -296,7 +218,7 @@ export default function VendedorView({ session, isDev }) {
     <div>
       {isDev && (
         <div className="mb-4 p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
-          Estás en MODO DEV. Los datos mostrados son de prueba (Mockup) y no afectan a la base de datos real.
+          Estás en MODO DEV. Estás conectado a la base de datos SANDBOX. Cambios aquí no afectan Producción.
         </div>
       )}
 

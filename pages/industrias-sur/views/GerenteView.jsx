@@ -35,58 +35,6 @@ export default function GerenteView({ isDev }) {
 
   const fetchData = async () => {
     setLoading(true);
-    
-    if (isDev) {
-      // GENERATE MOCK DATA
-      const mockContactos = Array.from({ length: 150 }).map((_, i) => {
-        let estado = 'Nuevo';
-        const rand = Math.random();
-        if (rand > 0.8) estado = 'Venta';
-        else if (rand > 0.6) estado = 'Recompra';
-        else if (rand > 0.4) estado = 'Descartado';
-        else if (rand > 0.2) estado = 'Supervisor';
-        else estado = 'Rellamar';
-
-        const uen = ['Industrias Sur', 'Aries', 'Medús'][Math.floor(Math.random() * 3)];
-        const provincia = ['Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza'][Math.floor(Math.random() * 4)];
-        
-        // Random date in last 60 days
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-
-        return {
-          id: `c${i}`,
-          estado_actual: estado,
-          unidad_negocio: uen,
-          provincia: provincia,
-          vendedor_id: estado !== 'Nuevo' && estado !== 'Supervisor' ? `v${Math.floor(Math.random() * 3)}` : null,
-          fecha_creacion: date.toISOString()
-        };
-      });
-
-      const mockPerfiles = [
-        { id: 'v0', nombre_completo: 'Vendedor Alpha', rol: 'Vendedor' },
-        { id: 'v1', nombre_completo: 'Vendedor Beta', rol: 'Vendedor' },
-        { id: 'v2', nombre_completo: 'Vendedor Gamma', rol: 'Vendedor' }
-      ];
-
-      const mockInteracciones = Array.from({ length: 300 }).map((_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-        return {
-          id: `i${i}`,
-          contacto_id: `c${Math.floor(Math.random() * 150)}`,
-          completada: Math.random() > 0.2, // 80% completadas
-          fecha_creacion: date.toISOString(),
-          fecha_vencimiento: date.toISOString(),
-          vendedor_id: `v${Math.floor(Math.random() * 3)}` // Simulación simplificada
-        };
-      });
-
-      setRawData({ contactos: mockContactos, interacciones: mockInteracciones, perfiles: mockPerfiles });
-      setLoading(false);
-      return;
-    }
 
     // REAL DB FETCH
     try {
@@ -231,7 +179,7 @@ export default function GerenteView({ isDev }) {
     <div className="space-y-6 animate-in fade-in duration-300">
       {isDev && (
         <div className="p-3 bg-warning/10 border border-warning/20 text-warning-800 rounded-lg text-sm font-medium flex items-center justify-center">
-          Estás en MODO DEV. Los datos del dashboard son generados aleatoriamente (Mockup).
+          Estás conectado a la base de datos SANDBOX. Cambios aquí no afectan Producción.
         </div>
       )}
 
