@@ -128,6 +128,7 @@ export default function DevView() {
                       >
                         <option value="Dev">Dev</option>
                         <option value="Administrador">Administrador</option>
+                        <option value="Prospector">Prospector</option>
                         <option value="Supervisor">Supervisor</option>
                         <option value="Vendedor">Vendedor</option>
                       </select>

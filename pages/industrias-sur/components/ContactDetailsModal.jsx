@@ -196,7 +196,9 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
         {/* Header */}
         <div className="flex items-center justify-between p-4 lg:p-5 border-b border-neutral-200 bg-neutral-50 shrink-0">
           <div className="min-w-0 flex-1">
-            <h3 className="font-heading font-bold text-lg text-neutral-800">Alta de Cliente</h3>
+            <h3 className="font-heading font-bold text-lg text-neutral-800">
+              {['Nuevo', 'Asignado'].includes(contacto.estado_actual) ? 'Alta de Prospecto' : 'Ficha del Cliente'}
+            </h3>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <p className="text-sm text-neutral-600 font-medium truncate">{contacto.razon_social}</p>
               <span className="px-2 py-0.5 bg-primary-100 text-primary-800 rounded text-xs font-bold shrink-0">{contacto.estado_actual}</span>
