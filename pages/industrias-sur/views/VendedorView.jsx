@@ -58,7 +58,7 @@ export default function VendedorView({ session, isDev }) {
       let nuevasOportunidades = [];
 
       // 1. Fetch nuevos asignados (Tareas para Hoy)
-      let queryNuevos = supabase.from('contactos').select('*').eq('estado_actual', 'Asignado');
+      let queryNuevos = supabase.from(isDev ? 'contactos_sandbox' : 'contactos').select('*').eq('estado_actual', 'Asignado');
       if (session?.user?.id) queryNuevos = queryNuevos.eq('vendedor_id', session.user.id);
       
       const { data: nuevosData } = await queryNuevos;
@@ -124,7 +124,7 @@ export default function VendedorView({ session, isDev }) {
       setOportunidades(nuevasOportunidades);
       
     } else if (activeTab === 'clientes') {
-      let queryClientes = supabase.from('contactos')
+      let queryClientes = supabase.from(isDev ? 'contactos_sandbox' : 'contactos')
         .select('*')
         .in('estado_actual', ['Venta', 'Recompra'])
         .order('fecha_actualizacion', { ascending: false });
@@ -168,7 +168,7 @@ export default function VendedorView({ session, isDev }) {
       return;
     }
 
-    const { data: contactoData } = await supabase.from('contactos').select('*').eq('id', item.lead_id).single();
+    const { data: contactoData } = await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').select('*').eq('id', item.lead_id).single();
     if (contactoData) {
       setViewContact(contactoData);
     }
@@ -177,7 +177,7 @@ export default function VendedorView({ session, isDev }) {
   const handleSaveResolution = async (resolutionData) => {
     // Validación de Alta de Cliente
     if (resolutionData.option === 'exit' && selectedTask && !isDev) {
-      const { data: currentContact } = await supabase.from('contactos').select('*').eq('id', selectedTask.lead_id).single();
+      const { data: currentContact } = await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').select('*').eq('id', selectedTask.lead_id).single();
       if (currentContact) {
         const validacion = validarAltaCliente(currentContact);
         if (!validacion.esValido) {
@@ -243,10 +243,10 @@ export default function VendedorView({ session, isDev }) {
 
     // DB Update
     if (selectedTask.isInteraction) {
-      await supabase.from('interacciones_contactos').update({ completada: true, notas: resolutionData.notes }).eq('id', selectedTask.id);
+      await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').update({ completada: true, notas: resolutionData.notes }).eq('id', selectedTask.id);
     } else {
       // Registrar primer contacto si era un Asignado sin interacciones previas
-      await supabase.from('interacciones_contactos').insert({
+      await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert({
         contacto_id: selectedTask.lead_id,
         tipo_accion: 'Primer Contacto',
         resultado: resolutionData.option,
@@ -277,10 +277,10 @@ export default function VendedorView({ session, isDev }) {
     }
 
     if (nuevoEstado) {
-      await supabase.from('contactos').update({ estado_actual: nuevoEstado }).eq('id', selectedTask.lead_id);
+      await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').update({ estado_actual: nuevoEstado }).eq('id', selectedTask.lead_id);
     }
     if (nuevaAccion) {
-      await supabase.from('interacciones_contactos').insert({ 
+      await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert({ 
         contacto_id: selectedTask.lead_id, 
         tipo_accion: nuevaAccion, 
         fecha_vencimiento: nuevaFechaVenc.toISOString(), 
@@ -397,6 +397,7 @@ export default function VendedorView({ session, isDev }) {
           onClose={() => setViewContact(null)} 
           onRefresh={isDev ? () => setViewContact(null) : fetchTabData} 
           userRole="Vendedor"
+          isDev={isDev}
         />
       )}
     </div>

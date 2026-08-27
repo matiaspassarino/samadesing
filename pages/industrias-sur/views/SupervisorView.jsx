@@ -34,7 +34,7 @@ export default function SupervisorView({ isDev }) {
     }
 
     const [contactosRes, vendRes] = await Promise.all([
-      supabase.from('contactos')
+      supabase.from(isDev ? 'contactos_sandbox' : 'contactos')
         .select('*')
         .is('vendedor_id', null)
         .eq('estado_actual', 'Supervisor')

@@ -16,8 +16,8 @@ export default function DevView() {
     if (perfilesData) setUsers(perfilesData);
 
     // Traer métricas rápidas
-    const { count: leadsCount } = await supabase.from('leads').select('*', { count: 'exact', head: true });
-    const { count: tareasCount } = await supabase.from('interacciones').select('*', { count: 'exact', head: true });
+    const { count: leadsCount } = await supabase.from('contactos_sandbox').select('*', { count: 'exact', head: true });
+    const { count: tareasCount } = await supabase.from('interacciones_contactos_sandbox').select('*', { count: 'exact', head: true });
     
     setMetrics({
       leads: leadsCount || 0,

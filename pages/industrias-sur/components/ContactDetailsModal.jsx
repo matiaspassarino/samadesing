@@ -6,7 +6,7 @@ import { calcularEstadoTabs } from '../lib/validarAltaCliente';
 
 const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medús'];
 
-export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin' }) {
+export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin', isDev = false }) {
   const [activeTab, setActiveTab] = useState('Empresa');
   
   // Estado general
@@ -81,7 +81,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
   const fetchHistorial = async () => {
     setLoadingHistorial(true);
     const { data, error } = await supabase
-      .from('interacciones_contactos')
+      .from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos')
       .select('*')
       .eq('contacto_id', contacto.id)
       .order('fecha_creacion', { ascending: false });
@@ -133,10 +133,11 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
       contacto_id: contacto.id,
       tipo_accion: 'Registro Directo',
       resultado,
-      notas: comentarios
+      notas: comentarios,
+      fecha_creacion: new Date().toISOString()
     };
     
-    const { error } = await supabase.from('interacciones_contactos').insert(interaction);
+    const { error } = await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert(interaction);
     if (error) {
       toast.error('Error al guardar interacción: ' + error.message);
     } else {

@@ -143,7 +143,7 @@ export default function AdminView({ isDev }) {
     }
 
     // 3. Insertar los realmente nuevos
-    const { error } = await supabase.from('contactos').insert(finalContactos);
+    const { error } = await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').insert(finalContactos);
     
     if (error) {
       toast.error("Error al importar: " + error.message);
@@ -209,9 +209,9 @@ export default function AdminView({ isDev }) {
       return;
     }
 
-    const { error } = await supabase.from('contactos').update({ estado_actual: 'Nuevo' }).eq('id', contacto.id);
+    const { error } = await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').update({ estado_actual: 'Nuevo' }).eq('id', contacto.id);
     if (!error) {
-      await supabase.from('interacciones_contactos').insert({
+      await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert({
         contacto_id: contacto.id,
         tipo_accion: 'Reingreso al Circuito',
         resultado: 'Reingresado',

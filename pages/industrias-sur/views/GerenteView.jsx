@@ -91,8 +91,8 @@ export default function GerenteView({ isDev }) {
     // REAL DB FETCH
     try {
       const [contRes, intRes, perfRes] = await Promise.all([
-        supabase.from('contactos').select('id, estado_actual, unidad_negocio, provincia, vendedor_id, fecha_creacion'),
-        supabase.from('interacciones_contactos').select('id, contacto_id, completada, fecha_creacion, fecha_vencimiento'),
+        supabase.from(isDev ? 'contactos_sandbox' : 'contactos').select('id, estado_actual, unidad_negocio, provincia, vendedor_id, fecha_creacion'),
+        supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').select('id, contacto_id, completada, fecha_creacion, fecha_vencimiento'),
         supabase.from('perfiles').select('id, nombre_completo, rol')
       ]);
 
