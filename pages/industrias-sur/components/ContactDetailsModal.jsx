@@ -3,58 +3,29 @@ import { supabase } from '../lib/supabase';
 import { X, CheckCircle, Clock, Trash2, Save, History, Building2, Phone, MapPin, FileText, Loader2, Mail, UserPlus, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medús'];
+const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medus'];
 
 export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin' }) {
-  // Estados para la info del contacto
-  const [formData, setFormData] = useState({
-    razon_social: contacto.razon_social || '',
-    cuit: contacto.cuit || '',
-    telefono: contacto.telefono || '',
-    email: contacto.email || '',
-    provincia: contacto.provincia || '',
-    domicilio: contacto.domicilio || '',
-    condicion_iva: contacto.condicion_iva || ''
-  });
-  
-  // Unidades de negocio (Checkbox array)
-  const [unidades, setUnidades] = useState(() => {
-    if (!contacto.unidad_negocio) return [];
-    return contacto.unidad_negocio.split(',').map(s => s.trim()).filter(Boolean);
-  });
-
+  const [mobileTab, setMobileTab] = useState('info');
+  const [formData, setFormData] = useState({ razon_social: contacto.razon_social || '', cuit: contacto.cuit || '', telefono: contacto.telefono || '', email: contacto.email || '', provincia: contacto.provincia || '', domicilio: contacto.domicilio || '', condicion_iva: contacto.condicion_iva || '' });
+  const [unidades, setUnidades] = useState(() => { if (!contacto.unidad_negocio) return []; return contacto.unidad_negocio.split(',').map(s => s.trim()).filter(Boolean); });
   const [savingInfo, setSavingInfo] = useState(false);
-
-  // Estados para Personas Asociadas
   const [personas, setPersonas] = useState([]);
   const [loadingPersonas, setLoadingPersonas] = useState(true);
   const [newPersona, setNewPersona] = useState({ nombre: '', puesto: '', telefono: '', email: '' });
   const [savingPersona, setSavingPersona] = useState(false);
-
-  // Estados para la Interacción
   const [resultado, setResultado] = useState('exitoso');
   const [comentarios, setComentarios] = useState('');
   const [savingInteraction, setSavingInteraction] = useState(false);
-
-  // Estado para el historial
   const [historial, setHistorial] = useState([]);
   const [loadingHistorial, setLoadingHistorial] = useState(true);
 
-  useEffect(() => {
-    fetchHistorial();
-    fetchPersonas();
-  }, [contacto.id]);
+  useEffect(() => { fetchHistorial(); fetchPersonas(); }, [contacto.id]);
 
   const fetchPersonas = async () => {
     setLoadingPersonas(true);
-    const { data, error } = await supabase
-      .from('personas_contacto')
-      .select('*')
-      .eq('contacto_id', contacto.id)
-      .order('fecha_creacion', { ascending: true });
-    if (!error && data) {
-      setPersonas(data);
-    }
+    const { data, error } = await supabase.from('personas_contacto').select('*').eq('contacto_id', contacto.id).order('fecha_creacion', { ascending: true });
+    if (!error && data) setPersonas(data);
     setLoadingPersonas(false);
   };
 
@@ -62,375 +33,197 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     e.preventDefault();
     if (!newPersona.nombre.trim()) return;
     setSavingPersona(true);
-    const { data, error } = await supabase.from('personas_contacto').insert({
-      contacto_id: contacto.id,
-      ...newPersona
-    }).select();
-    
-    if (error) {
-      toast.error("Error al guardar persona: " + error.message);
-    } else {
-      setPersonas([...personas, data[0]]);
-      setNewPersona({ nombre: '', puesto: '', telefono: '', email: '' });
-      toast.success("Persona agregada exitosamente");
-    }
+    const { data, error } = await supabase.from('personas_contacto').insert({ contacto_id: contacto.id, ...newPersona }).select();
+    if (error) { toast.error('Error al guardar persona: ' + error.message); }
+    else { setPersonas([...personas, data[0]]); setNewPersona({ nombre: '', puesto: '', telefono: '', email: '' }); toast.success('Persona agregada exitosamente'); }
     setSavingPersona(false);
   };
 
   const handleDeletePersona = async (id) => {
     const { error } = await supabase.from('personas_contacto').delete().eq('id', id);
-    if (!error) {
-      setPersonas(personas.filter(p => p.id !== id));
-      toast.success("Persona eliminada");
-    } else {
-      toast.error("Error al eliminar persona: " + error.message);
-    }
+    if (!error) { setPersonas(personas.filter(p => p.id !== id)); toast.success('Persona eliminada'); }
+    else { toast.error('Error al eliminar persona: ' + error.message); }
   };
 
   const fetchHistorial = async () => {
     setLoadingHistorial(true);
-    const { data, error } = await supabase
-      .from('interacciones_contactos')
-      .select('*')
-      .eq('contacto_id', contacto.id)
-      .order('fecha_creacion', { ascending: false });
-    
-    if (!error && data) {
-      setHistorial(data);
-    }
+    const { data, error } = await supabase.from('interacciones_contactos').select('*').eq('contacto_id', contacto.id).order('fecha_creacion', { ascending: false });
+    if (!error && data) setHistorial(data);
     setLoadingHistorial(false);
   };
 
-  const handleInfoChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleUnidadToggle = (unidad) => {
-    setUnidades(prev => 
-      prev.includes(unidad) 
-        ? prev.filter(u => u !== unidad)
-        : [...prev, unidad]
-    );
-  };
+  const handleInfoChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleUnidadToggle = (unidad) => setUnidades(prev => prev.includes(unidad) ? prev.filter(u => u !== unidad) : [...prev, unidad]);
 
   const handleSaveInfo = async () => {
     setSavingInfo(true);
-    const unidadesString = unidades.join(', ');
-    
-    const { error } = await supabase
-      .from('contactos')
-      .update({
-        ...formData,
-        unidad_negocio: unidadesString
-      })
-      .eq('id', contacto.id);
-      
-    if (error) {
-      toast.error("Error al actualizar la información: " + error.message);
-    } else {
-      toast.success("Información actualizada");
-      onRefresh(); // Refrescar vista padre por si cambiaron datos listados
-    }
+    const { error } = await supabase.from('contactos').update({ ...formData, unidad_negocio: unidades.join(', ') }).eq('id', contacto.id);
+    if (error) { toast.error('Error al actualizar: ' + error.message); }
+    else { toast.success('Informacion actualizada'); onRefresh(); }
     setSavingInfo(false);
   };
 
   const handleSubmitInteraction = async (e) => {
     e.preventDefault();
     if (!comentarios.trim()) return;
-
     setSavingInteraction(true);
-
     let nuevoEstado = contacto.estado_actual;
-    
     if (resultado === 'exitoso') nuevoEstado = 'Supervisor';
     else if (resultado === 'rellamar') nuevoEstado = 'Admin_Rellamar';
     else if (resultado === 'descartar') nuevoEstado = 'Descartado';
-
-    // 1. Guardar interacción
-    await supabase.from('interacciones_contactos').insert({
-      contacto_id: contacto.id,
-      tipo_accion: 'Gestión Admin',
-      resultado,
-      notas: comentarios,
-      completada: true
-    });
-
-    // 2. Actualizar estado del contacto
+    await supabase.from('interacciones_contactos').insert({ contacto_id: contacto.id, tipo_accion: 'Gestion Admin', resultado, notas: comentarios, completada: true });
     await supabase.from('contactos').update({ estado_actual: nuevoEstado }).eq('id', contacto.id);
-
     setSavingInteraction(false);
     onRefresh();
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] shadow-2xl flex flex-col overflow-hidden">
-        
-        {/* HEADER */}
-        <div className="flex items-center justify-between p-5 border-b border-neutral-200 bg-neutral-50 shrink-0">
-          <div>
-            <h3 className="font-heading font-bold text-xl text-neutral-800">
-              Detalles del Contacto
-            </h3>
-            <div className="flex items-center gap-3 mt-1">
-              <p className="text-sm text-neutral-600 font-medium">{contacto.razon_social}</p>
-              <span className="px-2 py-0.5 bg-primary-100 text-primary-800 rounded text-xs font-bold">
-                {contacto.estado_actual}
-              </span>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded-xl transition-colors"
-          >
-            <X size={24} />
-          </button>
+  const InfoPanel = () => (
+    <div className="flex flex-col overflow-y-auto bg-white p-5 lg:p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="font-bold text-neutral-800 flex items-center gap-2"><FileText className="text-primary-500" size={18} />Informacion del Contacto</h4>
+        <button onClick={handleSaveInfo} disabled={savingInfo} className="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-2 transition-colors">
+          {savingInfo ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Actualizar Info
+        </button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div><label className="block text-xs font-semibold text-neutral-500 mb-1">Razon Social</label><div className="relative"><Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" /><input type="text" name="razon_social" value={formData.razon_social} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" /></div></div>
+        <div><label className="block text-xs font-semibold text-neutral-500 mb-1">CUIT</label><input type="text" name="cuit" value={formData.cuit} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500 font-mono" /></div>
+        <div><label className="block text-xs font-semibold text-neutral-500 mb-1">Telefono Principal</label><div className="relative"><Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" /><input type="text" name="telefono" value={formData.telefono} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" /></div></div>
+        <div><label className="block text-xs font-semibold text-neutral-500 mb-1">Email Principal</label><div className="relative"><Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" /><input type="email" name="email" value={formData.email} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" /></div></div>
+        <div><label className="block text-xs font-semibold text-neutral-500 mb-1">Condicion IVA</label><input type="text" name="condicion_iva" value={formData.condicion_iva} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" /></div>
+        <div><label className="block text-xs font-semibold text-neutral-500 mb-1">Provincia</label><input type="text" name="provincia" value={formData.provincia} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" /></div>
+        <div className="sm:col-span-2"><label className="block text-xs font-semibold text-neutral-500 mb-1">Domicilio</label><div className="relative"><MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" /><input type="text" name="domicilio" value={formData.domicilio} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" /></div></div>
+      </div>
+      <div className="mb-8">
+        <label className="block text-xs font-semibold text-neutral-500 mb-2">Unidad de Negocio</label>
+        <div className="flex flex-wrap gap-3">
+          {UNIDADES_NEGOCIO.map(unidad => (
+            <label key={unidad} className="flex items-center gap-2 cursor-pointer bg-neutral-50 border border-neutral-200 px-3 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors">
+              <input type="checkbox" className="rounded text-primary-500 focus:ring-primary-500" checked={unidades.includes(unidad)} onChange={() => handleUnidadToggle(unidad)} />
+              <span className="text-sm font-medium text-neutral-700">{unidad}</span>
+            </label>
+          ))}
         </div>
-
-        {/* BODY */}
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-          
-          {/* LEFT COLUMN: INFO & HISTORIAL */}
-          <div className={`${userRole === 'Admin' ? 'lg:w-3/5 border-r' : 'w-full'} border-neutral-200 flex flex-col overflow-y-auto bg-white p-6`}>
-            
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="font-bold text-neutral-800 flex items-center gap-2">
-                <FileText className="text-primary-500" size={18} />
-                Información del Contacto
-              </h4>
-              <button 
-                onClick={handleSaveInfo}
-                disabled={savingInfo}
-                className="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-2 transition-colors"
-              >
-                {savingInfo ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Actualizar Info
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Razón Social</label>
-                <div className="relative">
-                  <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input type="text" name="razon_social" value={formData.razon_social} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
+      </div>
+      <div className="mb-8 border-t border-neutral-200 pt-6">
+        <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-4"><Users className="text-primary-500" size={18} />Personas Asociadas</h4>
+        {loadingPersonas ? (<div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>)
+        : personas.length > 0 ? (
+          <div className="space-y-2 mb-4">
+            {personas.map(p => (
+              <div key={p.id} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+                <div>
+                  <p className="font-semibold text-sm text-neutral-800">{p.nombre} <span className="text-xs font-normal text-neutral-500 ml-1">({p.puesto || 'Sin puesto'})</span></p>
+                  <p className="text-xs text-neutral-600 mt-0.5">{p.telefono && <span className="mr-3">tel {p.telefono}</span>}{p.email && <span>mail {p.email}</span>}</p>
                 </div>
+                <button onClick={() => handleDeletePersona(p.id)} className="text-neutral-400 hover:text-red-500 transition-colors p-1"><Trash2 size={16} /></button>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">CUIT</label>
-                <input type="text" name="cuit" value={formData.cuit} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500 font-mono" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Teléfono Principal</label>
-                <div className="relative">
-                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input type="text" name="telefono" value={formData.telefono} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Email Principal</label>
-                <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input type="email" name="email" value={formData.email} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-neutral-500 mb-1">Condición IVA</label>
-                <input type="text" name="condicion_iva" value={formData.condicion_iva} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
-              </div>
-              <div>
-                  <label className="block text-xs font-semibold text-neutral-500 mb-1">Provincia</label>
-                  <input type="text" name="provincia" value={formData.provincia} onChange={handleInfoChange} className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
-              </div>
-              <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-neutral-500 mb-1">Domicilio</label>
-                  <div className="relative">
-                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    <input type="text" name="domicilio" value={formData.domicilio} onChange={handleInfoChange} className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:border-primary-500" />
-                  </div>
-              </div>
-            </div>
-
-            {/* UNIDADES DE NEGOCIO (CHECKBOXES) */}
-            <div className="mb-8">
-              <label className="block text-xs font-semibold text-neutral-500 mb-2">Unidad de Negocio</label>
-              <div className="flex flex-wrap gap-3">
-                {UNIDADES_NEGOCIO.map(unidad => (
-                  <label key={unidad} className="flex items-center gap-2 cursor-pointer bg-neutral-50 border border-neutral-200 px-3 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors">
-                    <input 
-                      type="checkbox" 
-                      className="rounded text-primary-500 focus:ring-primary-500"
-                      checked={unidades.includes(unidad)}
-                      onChange={() => handleUnidadToggle(unidad)}
-                    />
-                    <span className="text-sm font-medium text-neutral-700">{unidad}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* PERSONAS ASOCIADAS */}
-            <div className="mb-8 border-t border-neutral-200 pt-6">
-              <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-4">
-                <Users className="text-primary-500" size={18} />
-                Personas Asociadas
-              </h4>
-
-              {/* Lista de Personas */}
-              {loadingPersonas ? (
-                 <div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>
-              ) : personas.length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {personas.map(p => (
-                    <div key={p.id} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50">
-                      <div>
-                        <p className="font-semibold text-sm text-neutral-800">{p.nombre} <span className="text-xs font-normal text-neutral-500 ml-1">({p.puesto || 'Sin puesto'})</span></p>
-                        <p className="text-xs text-neutral-600 mt-0.5">
-                          {p.telefono && <span className="mr-3">📞 {p.telefono}</span>}
-                          {p.email && <span>✉️ {p.email}</span>}
-                        </p>
-                      </div>
-                      <button onClick={() => handleDeletePersona(p.id)} className="text-neutral-400 hover:text-red-500 transition-colors p-1" title="Eliminar persona">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-neutral-500 text-center py-2 italic mb-4">No hay personas asociadas aún.</p>
-              )}
-              
-              {/* Formulario Nueva Persona */}
-              <form onSubmit={handleAddPersona} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                  <input type="text" placeholder="Nombre completo" value={newPersona.nombre} onChange={e => setNewPersona({...newPersona, nombre: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" required />
-                  <input type="text" placeholder="Puesto (ej: Compras)" value={newPersona.puesto} onChange={e => setNewPersona({...newPersona, puesto: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
-                  <input type="text" placeholder="Teléfono" value={newPersona.telefono} onChange={e => setNewPersona({...newPersona, telefono: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
-                  <input type="email" placeholder="Email" value={newPersona.email} onChange={e => setNewPersona({...newPersona, email: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
-                </div>
-                <button type="submit" disabled={savingPersona} className="w-full bg-primary-100 hover:bg-primary-200 text-primary-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                  {savingPersona ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-                  Agregar Persona
-                </button>
-              </form>
-            </div>
-
-            {/* HISTORIAL / TRAZABILIDAD */}
-            <div className="mt-auto">
-              <div className="flex justify-between items-end mb-4 border-t border-neutral-200 pt-6">
-                <h4 className="font-bold text-neutral-800 flex items-center gap-2">
-                  <History className="text-primary-500" size={18} />
-                  Trazabilidad y Movimientos
-                </h4>
-                {!loadingHistorial && (
-                  <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md">
-                    {historial.length} interacciones
-                  </span>
-                )}
-              </div>
-              
-              {loadingHistorial ? (
-                <div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>
-              ) : historial.length === 0 ? (
-                <div className="text-sm text-neutral-500 bg-neutral-50 p-4 rounded-xl border border-dashed border-neutral-200 text-center">
-                  Aún no hay interacciones registradas.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {historial.map((item) => (
-                    <div key={item.id} className="bg-neutral-50 border border-neutral-200 p-4 rounded-xl">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="font-semibold text-sm text-neutral-800 flex items-center gap-2">
-                          {item.tipo_accion}
-                          <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide
-                            ${item.resultado?.toLowerCase() === 'exitoso' ? 'bg-success/20 text-success' : 
-                              item.resultado?.toLowerCase() === 'descartar' ? 'bg-danger/20 text-danger' : 
-                              'bg-warning/20 text-warning'}`}>
-                            {item.resultado || 'Registro'}
-                          </span>
-                        </span>
-                        <span className="text-xs text-neutral-500">
-                          {new Date(item.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-neutral-600">{item.notas || 'Sin comentarios.'}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
+            ))}
           </div>
+        ) : (<p className="text-sm text-neutral-500 text-center py-2 italic mb-4">No hay personas asociadas aun.</p>)}
+        <form onSubmit={handleAddPersona} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <input type="text" placeholder="Nombre completo" value={newPersona.nombre} onChange={e => setNewPersona({...newPersona, nombre: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" required />
+            <input type="text" placeholder="Puesto (ej: Compras)" value={newPersona.puesto} onChange={e => setNewPersona({...newPersona, puesto: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+            <input type="text" placeholder="Telefono" value={newPersona.telefono} onChange={e => setNewPersona({...newPersona, telefono: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+            <input type="email" placeholder="Email" value={newPersona.email} onChange={e => setNewPersona({...newPersona, email: e.target.value})} className="px-3 py-2 border border-neutral-300 rounded-lg text-sm w-full" />
+          </div>
+          <button type="submit" disabled={savingPersona} className="w-full bg-primary-100 hover:bg-primary-200 text-primary-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+            {savingPersona ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />} Agregar Persona
+          </button>
+        </form>
+      </div>
+      <div className="border-t border-neutral-200 pt-6">
+        <div className="flex justify-between items-end mb-4">
+          <h4 className="font-bold text-neutral-800 flex items-center gap-2"><History className="text-primary-500" size={18} />Trazabilidad y Movimientos</h4>
+          {!loadingHistorial && <span className="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md">{historial.length} interacciones</span>}
+        </div>
+        {loadingHistorial ? (<div className="flex justify-center p-4"><Loader2 className="animate-spin text-neutral-400" size={24} /></div>)
+        : historial.length === 0 ? (<div className="text-sm text-neutral-500 bg-neutral-50 p-4 rounded-xl border border-dashed border-neutral-200 text-center">Aun no hay interacciones registradas.</div>)
+        : (
+          <div className="space-y-4">
+            {historial.map((item) => (
+              <div key={item.id} className="bg-neutral-50 border border-neutral-200 p-4 rounded-xl">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-semibold text-sm text-neutral-800 flex items-center gap-2 flex-wrap">
+                    {item.tipo_accion}
+                    <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${item.resultado?.toLowerCase() === 'exitoso' ? 'bg-green-100 text-green-700' : item.resultado?.toLowerCase() === 'descartar' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{item.resultado || 'Registro'}</span>
+                  </span>
+                  <span className="text-xs text-neutral-500 shrink-0 ml-2">{new Date(item.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <p className="text-sm text-neutral-600">{item.notas || 'Sin comentarios.'}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
-          {/* RIGHT COLUMN: ACTION FORM */}
+  const ActionPanel = () => (
+    <div className="bg-neutral-50 p-5 lg:p-6 flex flex-col overflow-y-auto h-full">
+      <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-6"><Phone className="text-primary-500" size={18} />Registrar Interaccion</h4>
+      <form onSubmit={handleSubmitInteraction} className="flex flex-col flex-1">
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-neutral-700 mb-3">Resultado</label>
+          <div className="flex flex-col gap-3">
+            <label className={`group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${resultado === 'exitoso' ? 'border-green-500 bg-green-500 text-white' : 'border-neutral-200 bg-white hover:bg-green-500 hover:border-green-500 hover:text-white text-neutral-700'}`}>
+              <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
+              <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+              <span className="font-semibold text-sm">Contacto Exitoso (Pasar a Sup.)</span>
+            </label>
+            <label className={`group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${resultado === 'rellamar' ? 'border-yellow-500 bg-yellow-500 text-white' : 'border-neutral-200 bg-white hover:bg-yellow-500 hover:border-yellow-500 hover:text-white text-neutral-700'}`}>
+              <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
+              <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+              <span className="font-semibold text-sm">No Atiende / Rellamar</span>
+            </label>
+            <label className={`group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${resultado === 'descartar' ? 'border-red-500 bg-red-500 text-white' : 'border-neutral-200 bg-white hover:bg-red-500 hover:border-red-500 hover:text-white text-neutral-700'}`}>
+              <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
+              <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
+              <span className="font-semibold text-sm">Descartar (Perdido)</span>
+            </label>
+          </div>
+        </div>
+        <div className="mb-6 flex-1 flex flex-col">
+          <label className="block text-sm font-semibold text-neutral-700 mb-2">Comentarios de la gestion</label>
+          <textarea className="w-full flex-1 bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none min-h-[120px]" placeholder="Detalles de la charla..." value={comentarios} onChange={(e) => setComentarios(e.target.value)} required></textarea>
+        </div>
+        <button type="submit" disabled={savingInteraction || !comentarios.trim()} className="w-full py-3.5 rounded-xl font-bold bg-primary-500 hover:bg-primary-900 text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+          {savingInteraction ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} Guardar Interaccion
+        </button>
+      </form>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
+      <div className="bg-white w-full sm:rounded-2xl sm:max-w-5xl sm:h-[90vh] max-h-[95vh] shadow-2xl flex flex-col overflow-hidden rounded-t-2xl">
+        <div className="flex items-center justify-between p-4 lg:p-5 border-b border-neutral-200 bg-neutral-50 shrink-0">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-heading font-bold text-lg text-neutral-800">Detalles del Contacto</h3>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <p className="text-sm text-neutral-600 font-medium truncate">{contacto.razon_social}</p>
+              <span className="px-2 py-0.5 bg-primary-100 text-primary-800 rounded text-xs font-bold shrink-0">{contacto.estado_actual}</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded-xl transition-colors ml-2 shrink-0"><X size={24} /></button>
+        </div>
+        {userRole === 'Admin' && (
+          <div className="flex lg:hidden border-b border-neutral-200 bg-white shrink-0">
+            <button onClick={() => setMobileTab('info')} className={`flex-1 py-3 text-sm font-semibold transition-colors border-b-2 ${mobileTab === 'info' ? 'border-primary-500 text-primary-900' : 'border-transparent text-neutral-500'}`}>Informacion</button>
+            <button onClick={() => setMobileTab('accion')} className={`flex-1 py-3 text-sm font-semibold transition-colors border-b-2 ${mobileTab === 'accion' ? 'border-primary-500 text-primary-900' : 'border-transparent text-neutral-500'}`}>Registrar Interaccion</button>
+          </div>
+        )}
+        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+          <div className={[userRole === 'Admin' ? 'lg:w-3/5 lg:border-r border-neutral-200' : 'w-full', 'flex flex-col overflow-y-auto', userRole === 'Admin' ? (mobileTab === 'info' ? 'flex' : 'hidden lg:flex') : 'flex'].join(' ')}>
+            <InfoPanel />
+          </div>
           {userRole === 'Admin' && (
-            <div className="lg:w-2/5 bg-neutral-50 p-6 flex flex-col">
-              <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-6">
-                <Phone className="text-primary-500" size={18} />
-                Registrar Interacción
-              </h4>
-              
-              <form onSubmit={handleSubmitInteraction} className="flex flex-col flex-1">
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-neutral-700 mb-3">
-                    Resultado
-                  </label>
-                  <div className="flex flex-col gap-3">
-                    <label className={`
-                      group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                      ${resultado === 'exitoso' ? 'border-green-500 bg-green-500 text-white' : 'border-neutral-200 bg-white hover:bg-green-500 hover:border-green-500 hover:text-white text-neutral-700'}
-                    `}>
-                      <input type="radio" name="resultado" value="exitoso" checked={resultado === 'exitoso'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                      <CheckCircle size={20} className={resultado === 'exitoso' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
-                      <span className="font-semibold text-sm">Contacto Exitoso (Pasar a Sup.)</span>
-                    </label>
-
-                    <label className={`
-                      group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                      ${resultado === 'rellamar' ? 'border-yellow-500 bg-yellow-500 text-white' : 'border-neutral-200 bg-white hover:bg-yellow-500 hover:border-yellow-500 hover:text-white text-neutral-700'}
-                    `}>
-                      <input type="radio" name="resultado" value="rellamar" checked={resultado === 'rellamar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                      <Clock size={20} className={resultado === 'rellamar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
-                      <span className="font-semibold text-sm">No Atiende / Rellamar</span>
-                    </label>
-
-                    <label className={`
-                      group flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                      ${resultado === 'descartar' ? 'border-red-500 bg-red-500 text-white' : 'border-neutral-200 bg-white hover:bg-red-500 hover:border-red-500 hover:text-white text-neutral-700'}
-                    `}>
-                      <input type="radio" name="resultado" value="descartar" checked={resultado === 'descartar'} onChange={(e) => setResultado(e.target.value)} className="hidden" />
-                      <Trash2 size={20} className={resultado === 'descartar' ? 'text-white' : 'text-neutral-400 group-hover:text-white'} />
-                      <span className="font-semibold text-sm">Descartar (Perdido)</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="mb-6 flex-1 flex flex-col">
-                  <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                    Comentarios de la gestión
-                  </label>
-                  <textarea 
-                    className="w-full flex-1 bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none min-h-[120px]"
-                    placeholder="Detalles de la charla, por qué no contestó o razones del descarte..."
-                    value={comentarios}
-                    onChange={(e) => setComentarios(e.target.value)}
-                    required
-                  ></textarea>
-                </div>
-
-                <button 
-                  type="submit"
-                  disabled={savingInteraction || !comentarios.trim()}
-                  className="w-full py-3.5 rounded-xl font-bold bg-primary-500 hover:bg-primary-900 text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {savingInteraction ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                  Guardar Interacción
-                </button>
-              </form>
+            <div className={['lg:w-2/5 flex flex-col overflow-hidden', mobileTab === 'accion' ? 'flex' : 'hidden lg:flex'].join(' ')}>
+              <ActionPanel />
             </div>
           )}
-
         </div>
       </div>
     </div>

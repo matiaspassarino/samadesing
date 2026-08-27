@@ -109,7 +109,7 @@ export default function SupervisorView({ isDev }) {
         </div>
       )}
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-neutral-200 pb-4">
+      <div className="mb-6 flex flex-col gap-4 border-b border-neutral-200 pb-4">
         <div>
           <h2 className="font-heading font-bold text-2xl text-neutral-800 flex items-center gap-2">
             <Users className="text-primary-500" />
@@ -118,9 +118,9 @@ export default function SupervisorView({ isDev }) {
           <p className="text-neutral-500">Contactos exitosos listos para asignar a un vendedor.</p>
         </div>
 
-        <div className="flex items-center gap-3 bg-neutral-50 p-2 rounded-lg border border-neutral-200 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-neutral-50 p-3 rounded-lg border border-neutral-200">
           <select 
-            className="bg-white border border-neutral-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500 outline-none flex-1"
+            className="bg-white border border-neutral-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none flex-1"
             value={selectedVendedor}
             onChange={(e) => setSelectedVendedor(e.target.value)}
           >
@@ -132,7 +132,7 @@ export default function SupervisorView({ isDev }) {
           <button
             onClick={handleAssign}
             disabled={selectedContactos.size === 0 || !selectedVendedor || assigning}
-            className="bg-primary-900 hover:bg-primary-500 text-white px-4 py-1.5 rounded text-sm font-semibold flex items-center gap-2 disabled:opacity-50 transition-colors"
+            className="bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors shrink-0"
           >
             {assigning ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
             Asignar ({selectedContactos.size})
@@ -157,9 +157,9 @@ export default function SupervisorView({ isDev }) {
                   </button>
                 </th>
                 <th className="px-4 py-3 font-semibold">Razón Social</th>
-                <th className="px-4 py-3 font-semibold">CUIT</th>
-                <th className="px-4 py-3 font-semibold">Provincia</th>
-                <th className="px-4 py-3 font-semibold">Fecha Ingreso al Sup.</th>
+                <th className="px-4 py-3 font-semibold hidden sm:table-cell">CUIT</th>
+                <th className="px-4 py-3 font-semibold hidden sm:table-cell">Provincia</th>
+                <th className="px-4 py-3 font-semibold hidden md:table-cell">Fecha Ingreso al Sup.</th>
                 <th className="px-4 py-3 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
@@ -174,9 +174,9 @@ export default function SupervisorView({ isDev }) {
                       </button>
                     </td>
                     <td className="px-4 py-3 font-medium text-neutral-800">{contacto.razon_social}</td>
-                    <td className="px-4 py-3">{contacto.cuit || '-'}</td>
-                    <td className="px-4 py-3">{contacto.provincia || '-'}</td>
-                    <td className="px-4 py-3">{new Date(contacto.fecha_actualizacion).toLocaleDateString('es-AR')}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{contacto.cuit || '-'}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{contacto.provincia || '-'}</td>
+                    <td className="px-4 py-3 hidden md:table-cell">{new Date(contacto.fecha_actualizacion).toLocaleDateString('es-AR')}</td>
                     <td className="px-4 py-3 text-right">
                       <button 
                         onClick={() => setContactoToView(contacto)}

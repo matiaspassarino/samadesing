@@ -304,10 +304,10 @@ export default function GerenteView({ isDev }) {
       </div>
 
       {/* CHARTS ROW 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
           <h3 className="font-bold text-neutral-800 mb-6">Embudo de Ventas (Funnel)</h3>
-          <div className="h-64">
+          <div className="h-72">
             <Bar 
               data={funnelChartData} 
               options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} 
@@ -317,7 +317,7 @@ export default function GerenteView({ isDev }) {
         
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
           <h3 className="font-bold text-neutral-800 mb-6">Rendimiento por Vendedor</h3>
-          <div className="h-64">
+          <div className="h-72">
             <Bar 
               data={sellerChartData} 
               options={{ maintainAspectRatio: false }} 
@@ -327,8 +327,8 @@ export default function GerenteView({ isDev }) {
       </div>
 
       {/* CHARTS ROW 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 lg:col-span-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 md:col-span-1">
           <h3 className="font-bold text-neutral-800 mb-6">Unidades de Negocio</h3>
           <div className="h-48 flex justify-center">
              {Object.keys(metrics.uenCount).length > 0 ? (
@@ -342,15 +342,15 @@ export default function GerenteView({ isDev }) {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 lg:col-span-2">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 md:col-span-2">
           <h3 className="font-bold text-neutral-800 mb-6">Top Provincias</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-neutral-600">
               <thead className="border-b border-neutral-200">
                 <tr>
                   <th className="pb-3 font-semibold">Provincia</th>
-                  <th className="pb-3 font-semibold text-right">Cantidad de Leads</th>
-                  <th className="pb-3 font-semibold text-right">% del Total</th>
+                  <th className="pb-3 font-semibold text-right">Cantidad</th>
+                  <th className="pb-3 font-semibold text-right hidden sm:table-cell">% del Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -361,7 +361,7 @@ export default function GerenteView({ isDev }) {
                   <tr key={prov}>
                     <td className="py-3 font-medium text-neutral-800">{prov}</td>
                     <td className="py-3 text-right">{count}</td>
-                    <td className="py-3 text-right">
+                    <td className="py-3 text-right hidden sm:table-cell">
                       {((count / metrics.totalLeads) * 100).toFixed(1)}%
                     </td>
                   </tr>

@@ -309,7 +309,7 @@ export default function VendedorView({ session, isDev }) {
       {loading ? (
         <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
       ) : activeTab === 'bandeja' ? (
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Block: Tareas para Hoy */}
           <div className="flex-1 flex flex-col gap-3">
             <h3 className="font-semibold text-neutral-800 mb-2">Tareas para Hoy</h3>
@@ -330,7 +330,7 @@ export default function VendedorView({ session, isDev }) {
           </div>
           
           {/* Side Column: Oportunidades */}
-          <div className="w-full md:w-80 flex flex-col gap-3">
+          <div className="w-full lg:w-80 flex flex-col gap-3">
             <h3 className="font-semibold text-neutral-800 mb-2">Oportunidades (Pendientes)</h3>
             {oportunidades.length === 0 ? (
               <div className="text-center p-8 bg-white rounded-xl border border-neutral-200 shadow-sm">

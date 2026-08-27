@@ -55,7 +55,7 @@ export default function ResolutionModal({ task, onClose, onSave }) {
         {/* Body */}
         <form onSubmit={handleSubmit} className="overflow-y-auto p-5 flex flex-col gap-6">
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3">
             {OPTIONS.map((opt) => {
               const isSelected = selectedOption === opt.id;
               const Icon = opt.icon;
@@ -71,10 +71,10 @@ export default function ResolutionModal({ task, onClose, onSave }) {
                   }`}
                 >
                   <Icon className={`mb-2 ${isSelected ? 'text-white' : 'text-neutral-500 group-hover:text-white'}`} size={24} />
-                  <span className="font-semibold">
+                  <span className="font-semibold text-sm leading-tight">
                     {opt.label}
                   </span>
-                  <span className={`text-xs mt-1 ${isSelected ? 'text-white/80' : 'text-neutral-500 group-hover:text-white/80'}`}>{opt.desc}</span>
+                  <span className={`text-xs mt-1 leading-tight ${isSelected ? 'text-white/80' : 'text-neutral-500 group-hover:text-white/80'}`}>{opt.desc}</span>
                 </button>
               );
             })}

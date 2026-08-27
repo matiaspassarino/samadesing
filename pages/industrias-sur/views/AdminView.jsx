@@ -240,8 +240,8 @@ export default function AdminView({ isDev }) {
             <tr>
               <th className="px-4 py-3 font-semibold">Razón Social</th>
               <th className="px-4 py-3 font-semibold">Teléfono</th>
-              <th className="px-4 py-3 font-semibold">Provincia</th>
-              <th className="px-4 py-3 font-semibold">Fecha Ingreso</th>
+              <th className="px-4 py-3 font-semibold hidden sm:table-cell">Provincia</th>
+              <th className="px-4 py-3 font-semibold hidden md:table-cell">Fecha Ingreso</th>
               <th className="px-4 py-3 font-semibold text-right">Acciones</th>
             </tr>
           </thead>
@@ -250,8 +250,8 @@ export default function AdminView({ isDev }) {
               <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
                 <td className="px-4 py-3 font-medium text-neutral-800">{c.razon_social}</td>
                 <td className="px-4 py-3">{c.telefono || '-'}</td>
-                <td className="px-4 py-3">{c.provincia || '-'}</td>
-                <td className="px-4 py-3">{new Date(c.fecha_creacion).toLocaleDateString('es-AR')}</td>
+                <td className="px-4 py-3 hidden sm:table-cell">{c.provincia || '-'}</td>
+                <td className="px-4 py-3 hidden md:table-cell">{new Date(c.fecha_creacion).toLocaleDateString('es-AR')}</td>
                 <td className="px-4 py-3 flex justify-end gap-2">
                   {activeTab === 'perdidos' ? (
                     <button 
@@ -295,7 +295,7 @@ export default function AdminView({ isDev }) {
         </div>
         
         {/* TABS PRINCIPALES Y SUB-TABS */}
-        <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 overflow-x-auto max-w-full">
+        <div className="flex flex-wrap items-center gap-1 bg-neutral-100 p-1 rounded-lg">
           <button 
             onClick={() => setActiveTab('nuevos')}
             className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'nuevos' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
@@ -315,7 +315,8 @@ export default function AdminView({ isDev }) {
             <Trash2 size={16} /> Perdidos
           </button>
           
-          <div className="w-px bg-neutral-300 mx-1"></div>
+          <div className="w-px bg-neutral-300 mx-1 self-stretch hidden sm:block"></div>
+          <div className="w-full sm:hidden h-px bg-neutral-300 my-0.5"></div>
 
           <button 
             onClick={() => setActiveTab('importar')}
