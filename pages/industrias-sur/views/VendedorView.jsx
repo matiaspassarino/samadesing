@@ -52,7 +52,7 @@ export default function VendedorView({ session, isDev }) {
 
       // 2. Fetch interacciones pendientes
       let queryInteracciones = supabase
-        .from('interacciones_contactos')
+        .from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos')
         .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos!inner(razon_social, estado_actual, vendedor_id)`)
         .eq('completada', false)
         .in('contactos.estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado', 'Asignado', 'Venta', 'Recompra']);
