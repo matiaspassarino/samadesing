@@ -44,6 +44,52 @@ export default function DevView() {
     setSavingId(null);
   };
 
+  const handleResetSandbox = async () => {
+    toast((t) => (
+      <div>
+        <p className="mb-3 font-medium text-neutral-800">¿Seguro que quieres vaciar la tabla contactos_sandbox? (Las interacciones se borrarán en cascada)</p>
+        <div className="flex gap-2 justify-end">
+          <button 
+            className="px-3 py-1.5 text-sm font-semibold rounded bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancelar
+          </button>
+          <button 
+            className="px-3 py-1.5 text-sm font-semibold rounded bg-danger text-white hover:bg-danger-600"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const { error } = await supabase.from('contactos_sandbox').delete().not('id', 'is', null);
+              if (error) {
+                toast.error("Error al limpiar sandbox: " + error.message);
+              } else {
+                toast.success("Sandbox limpiado con éxito.");
+                fetchData();
+              }
+            }}
+          >
+            Sí, Vaciar
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
+  };
+
+  const handleSeedSandbox = async () => {
+    const mockLead = {
+      razon_social: `Mock Lead ${Math.floor(Math.random() * 1000)}`,
+      estado_actual: 'Nuevo',
+      telefono: '1122334455',
+      fecha_creacion: new Date().toISOString()
+    };
+    const { error } = await supabase.from('contactos_sandbox').insert(mockLead);
+    if (error) toast.error("Error al crear lead: " + error.message);
+    else {
+      toast.success("Lead de prueba creado.");
+      fetchData();
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-500" size={32} /></div>;
   }
@@ -82,6 +128,30 @@ export default function DevView() {
             <p className="text-sm font-medium text-neutral-500">Total Interacciones</p>
             <p className="text-2xl font-bold text-neutral-800">{metrics.tareas}</p>
           </div>
+        </div>
+      </div>
+
+      {/* SANDBOX TOOLS */}
+      <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+          <h3 className="font-semibold text-neutral-800 flex items-center gap-2">
+            <Database size={18} className="text-neutral-500" />
+            Herramientas Sandbox
+          </h3>
+        </div>
+        <div className="p-6 flex flex-wrap gap-4">
+          <button 
+            onClick={handleSeedSandbox}
+            className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-4 py-2 rounded-lg font-medium transition-colors border border-primary-200"
+          >
+            + Generar Lead "Nuevo"
+          </button>
+          <button 
+            onClick={handleResetSandbox}
+            className="bg-danger/10 text-danger hover:bg-danger/20 px-4 py-2 rounded-lg font-medium transition-colors border border-danger/20"
+          >
+            Limpiar Datos Sandbox
+          </button>
         </div>
       </div>
 
@@ -128,6 +198,7 @@ export default function DevView() {
                       >
                         <option value="Dev">Dev</option>
                         <option value="Administrador">Administrador</option>
+                        <option value="Gerente">Gerente</option>
                         <option value="Prospector">Prospector</option>
                         <option value="Supervisor">Supervisor</option>
                         <option value="Vendedor">Vendedor</option>

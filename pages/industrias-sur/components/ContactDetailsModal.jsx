@@ -111,7 +111,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     };
 
     const { error } = await supabase
-      .from('contactos')
+      .from(isDev ? 'contactos_sandbox' : 'contactos')
       .update(updateData)
       .eq('id', contacto.id);
       

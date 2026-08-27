@@ -106,7 +106,7 @@ export default function ProspectorView({ isDev }) {
     }
 
     const { data: existentesDb, error: errFetch } = await supabase
-      .from('contactos')
+      .from(isDev ? 'contactos_sandbox' : 'contactos')
       .select('telefono, email')
       .or(orQuery);
 
@@ -164,7 +164,7 @@ export default function ProspectorView({ isDev }) {
 
     if (estadoQuery.length > 0) {
       const { data: contactosData, error } = await supabase
-        .from('contactos')
+        .from(isDev ? 'contactos_sandbox' : 'contactos')
         .select('*')
         .in('estado_actual', estadoQuery)
         .order('fecha_creacion', { ascending: false });
@@ -196,7 +196,7 @@ export default function ProspectorView({ isDev }) {
     let nuevoEstado = selectedContacto.estado_actual;
     
     if (resolutionData.option === 'exit') {
-      nuevoEstado = 'Asignado'; // Deriva a Supervisor
+      nuevoEstado = 'Supervisor'; // Deriva a Supervisor
       toast.success('Lead calificado y derivado a Supervisor');
     } else if (resolutionData.option === 'fallido') {
       nuevoEstado = 'Descartado';

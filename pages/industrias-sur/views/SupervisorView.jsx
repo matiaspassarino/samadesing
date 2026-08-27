@@ -58,7 +58,7 @@ export default function SupervisorView({ isDev }) {
     const contactosIds = Array.from(selectedContactos);
 
     const { error } = await supabase
-      .from('contactos')
+      .from(isDev ? 'contactos_sandbox' : 'contactos')
       .update({ 
         vendedor_id: selectedVendedor,
         estado_actual: 'Asignado' // Pasa al vendedor

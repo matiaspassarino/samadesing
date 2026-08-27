@@ -34,7 +34,7 @@ export default function VendedorView({ session, isDev }) {
 
       // 1. Fetch nuevos asignados (Tareas para Hoy)
       let queryNuevos = supabase.from(isDev ? 'contactos_sandbox' : 'contactos').select('*').eq('estado_actual', 'Asignado');
-      if (session?.user?.id) queryNuevos = queryNuevos.eq('vendedor_id', session.user.id);
+      if (session?.user?.id && !isDev) queryNuevos = queryNuevos.eq('vendedor_id', session.user.id);
       
       const { data: nuevosData } = await queryNuevos;
       if (nuevosData) {
@@ -57,7 +57,7 @@ export default function VendedorView({ session, isDev }) {
         .eq('completada', false)
         .in('contactos.estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado', 'Asignado', 'Venta', 'Recompra']);
         
-      if (session?.user?.id) queryInteracciones = queryInteracciones.eq('contactos.vendedor_id', session.user.id);
+      if (session?.user?.id && !isDev) queryInteracciones = queryInteracciones.eq('contactos.vendedor_id', session.user.id);
 
       const { data: interaccionesData } = await queryInteracciones;
       
@@ -104,7 +104,7 @@ export default function VendedorView({ session, isDev }) {
         .in('estado_actual', ['Venta', 'Recompra'])
         .order('fecha_actualizacion', { ascending: false });
       
-      if (session?.user?.id) queryClientes = queryClientes.eq('vendedor_id', session.user.id);
+      if (session?.user?.id && !isDev) queryClientes = queryClientes.eq('vendedor_id', session.user.id);
       
       const { data: clData, error: errCl } = await queryClientes;
       if (!errCl && clData) {
