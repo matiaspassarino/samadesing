@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { toast } from 'react-hot-toast';
+import { validarAltaCliente } from '../lib/validarAltaCliente';
 import TaskRow from '../components/TaskRow';
 import ResolutionModal from '../components/ResolutionModal';
 import ContactDetailsModal from '../components/ContactDetailsModal';
 import { Inbox, Users, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 
 const TABS = [
   { id: 'bandeja', label: 'Bandeja', icon: Inbox },
@@ -174,6 +175,18 @@ export default function VendedorView({ session, isDev }) {
   };
 
   const handleSaveResolution = async (resolutionData) => {
+    // Validación de Alta de Cliente
+    if (resolutionData.option === 'exit' && selectedTask && !isDev) {
+      const { data: currentContact } = await supabase.from('contactos').select('*').eq('id', selectedTask.lead_id).single();
+      if (currentContact) {
+        const validacion = validarAltaCliente(currentContact);
+        if (!validacion.esValido) {
+          const tabs = Object.keys(validacion.porTab).join(', ');
+          toast.error(`No puedes marcar como Exitoso. Faltan completar campos obligatorios en: ${tabs}. Por favor, edita los detalles del contacto primero.`, { duration: 6000 });
+          return;
+        }
+      }
+    }
     if (isDev) {
       // Mock Data Update
       let newTareas = [...mockData.tareas];
