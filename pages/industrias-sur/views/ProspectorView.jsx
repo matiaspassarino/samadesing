@@ -180,15 +180,38 @@ export default function ProspectorView({ isDev }) {
     fetchContactos();
   }, [activeTab, isDev]);
 
-  const handleAsignar = async (contacto) => {
-    // Al asignar, el estado pasa a "Asignado", para que luego el Supervisor lo reparta.
-    const { error } = await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').update({ estado_actual: 'Asignado' }).eq('id', contacto.id);
-    if (!error) {
-      toast.success('Derivado a Supervisor');
-      fetchContactos();
-    } else {
-      toast.error('Error al asignar');
+  const handleSaveResolution = async (resolutionData) => {
+    if (!selectedContacto) return;
+    
+    const interaction = {
+      contacto_id: selectedContacto.id,
+      tipo_accion: 'Llamada de Prospector',
+      resultado: resolutionData.option,
+      notas: resolutionData.notes,
+      fecha_creacion: new Date().toISOString()
+    };
+    
+    await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert(interaction);
+    
+    let nuevoEstado = selectedContacto.estado_actual;
+    
+    if (resolutionData.option === 'exit') {
+      nuevoEstado = 'Asignado'; // Deriva a Supervisor
+      toast.success('Lead calificado y derivado a Supervisor');
+    } else if (resolutionData.option === 'fallido') {
+      nuevoEstado = 'Descartado';
+      toast.success('Lead descartado');
+    } else if (resolutionData.option === 'rellamar' || resolutionData.option === 'diferido') {
+      nuevoEstado = 'Admin_Rellamar';
+      toast.success('Recontacto registrado');
     }
+    
+    if (nuevoEstado !== selectedContacto.estado_actual) {
+      await supabase.from(isDev ? 'contactos_sandbox' : 'contactos').update({ estado_actual: nuevoEstado }).eq('id', selectedContacto.id);
+    }
+    
+    setSelectedContacto(null);
+    fetchContactos();
   };
 
   const handleReingresar = async (contacto) => {
