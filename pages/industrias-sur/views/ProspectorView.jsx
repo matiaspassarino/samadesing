@@ -391,12 +391,11 @@ export default function ProspectorView({ isDev }) {
         </div>
       )}
 
-      {selectedContacto && (
-        <ContactDetailsModal 
-          contacto={selectedContacto} 
-          onClose={() => setSelectedContacto(null)} 
-          onRefresh={isDev ? () => setSelectedContacto(null) : fetchContactos} 
-          userRole="Admin"
+            {selectedContacto && (
+        <ResolutionModal
+          task={{ leadName: selectedContacto.razon_social }}
+          onClose={() => setSelectedContacto(null)}
+          onSave={handleSaveResolution}
         />
       )}
     </div>
