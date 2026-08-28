@@ -306,7 +306,7 @@ export default function VendedorView({ session, isDev }) {
         <ContactDetailsModal 
           contacto={viewContact} 
           onClose={() => setViewContact(null)} 
-          onRefresh={isDev ? () => setViewContact(null) : fetchTabData} 
+          onRefresh={fetchTabData} 
           userRole="Vendedor"
           isDev={isDev}
         />

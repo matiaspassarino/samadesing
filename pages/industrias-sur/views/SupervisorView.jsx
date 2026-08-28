@@ -182,8 +182,9 @@ export default function SupervisorView({ isDev }) {
         <ContactDetailsModal 
           contacto={contactoToView} 
           onClose={() => setContactoToView(null)} 
-          onRefresh={isDev ? () => setContactoToView(null) : fetchData} 
+          onRefresh={fetchData} 
           userRole="Supervisor"
+          isDev={isDev}
         />
       )}
     </div>
