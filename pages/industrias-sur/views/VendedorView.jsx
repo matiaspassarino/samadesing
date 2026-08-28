@@ -388,7 +388,16 @@ export default function VendedorView({ session, isDev }) {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Block: Tareas para Hoy */}
           <div className="flex-1 flex flex-col gap-3">
-            <h3 className="font-semibold text-neutral-800 mb-2">Tareas para Hoy</h3>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold text-neutral-800">Tareas para Hoy</h3>
+              <button 
+                onClick={() => setIsTaskModalOpen(true)}
+                className="bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Agregar Tarea
+              </button>
+            </div>
             {tareas.length === 0 ? (
               <div className="text-center p-8 bg-white rounded-xl border border-neutral-200 shadow-sm">
                 <p className="text-neutral-500">No hay tareas pendientes para hoy.</p>
@@ -536,6 +545,8 @@ export default function VendedorView({ session, isDev }) {
         <TaskModal 
           onClose={() => setIsTaskModalOpen(false)}
           onSave={handleSaveGeneralTask}
+          isDev={isDev}
+          session={session}
         />
       )}
 

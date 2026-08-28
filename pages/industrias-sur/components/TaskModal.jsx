@@ -1,18 +1,44 @@
-import React, { useState } from 'react';
-import { X, Calendar, Type, AlignLeft, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Calendar, Type, AlignLeft, Users, Briefcase } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 
-export default function TaskModal({ onClose, onSave, vendedores }) {
+export default function TaskModal({ onClose, onSave, vendedores, isDev, session }) {
   const [loading, setLoading] = useState(false);
+  const [contactosList, setContactosList] = useState([]);
+  
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
     tipo: 'Otra',
+    fecha_inicio: '',
     fecha_vencimiento: '',
     vendedor_id: '',
+    contacto_id: ''
   });
 
   const TIPOS = ['Viaje', 'Visita', 'Reunión Interna', 'Llamada', 'Otra'];
+
+  // Determinar el vendedor objetivo (el seleccionado o el propio usuario si no hay selector)
+  const targetVendedorId = formData.vendedor_id || session?.user?.id;
+
+  // Cargar contactos cuando cambia el vendedor objetivo
+  useEffect(() => {
+    if (!targetVendedorId) return;
+    
+    const fetchContactos = async () => {
+      const { data, error } = await supabase
+        .from(isDev ? 'contactos_sandbox' : 'contactos')
+        .select('id, razon_social')
+        .eq('vendedor_id', targetVendedorId)
+        .order('razon_social');
+        
+      if (!error && data) {
+        setContactosList(data);
+      }
+    };
+    fetchContactos();
+  }, [targetVendedorId, isDev]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,10 +46,18 @@ export default function TaskModal({ onClose, onSave, vendedores }) {
       toast.error('Por favor, completa el título y la fecha.');
       return;
     }
+    if (formData.tipo === 'Viaje' && !formData.fecha_inicio) {
+      toast.error('Los viajes deben tener fecha de inicio.');
+      return;
+    }
     
     setLoading(true);
     try {
-      await onSave(formData);
+      await onSave({
+        ...formData,
+        fecha_inicio: formData.tipo === 'Viaje' ? formData.fecha_inicio : null,
+        contacto_id: formData.contacto_id || null
+      });
       onClose();
     } catch (err) {
       console.error(err);
@@ -93,7 +127,7 @@ export default function TaskModal({ onClose, onSave, vendedores }) {
                 <select
                   className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-neutral-800"
                   value={formData.vendedor_id}
-                  onChange={e => setFormData({...formData, vendedor_id: e.target.value})}
+                  onChange={e => setFormData({...formData, vendedor_id: e.target.value, contacto_id: ''})}
                 >
                   <option value="">Seleccionar Vendedor...</option>
                   {vendedores.map(v => (
@@ -103,18 +137,66 @@ export default function TaskModal({ onClose, onSave, vendedores }) {
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
-                <Calendar size={16} className="text-primary-600" />
-                Fecha y Hora
-              </label>
-              <input 
-                type="datetime-local" 
-                className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-neutral-800"
-                value={formData.fecha_vencimiento}
-                onChange={e => setFormData({...formData, fecha_vencimiento: e.target.value})}
-              />
-            </div>
+            {contactosList.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+                  <Briefcase size={16} className="text-primary-600" />
+                  Vincular a Cliente (Opcional)
+                </label>
+                <select
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-neutral-800"
+                  value={formData.contacto_id}
+                  onChange={e => setFormData({...formData, contacto_id: e.target.value})}
+                >
+                  <option value="">Ninguno</option>
+                  {contactosList.map(c => (
+                    <option key={c.id} value={c.id}>{c.razon_social}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {formData.tipo === 'Viaje' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+                    <Calendar size={16} className="text-primary-600" />
+                    Inicio
+                  </label>
+                  <input 
+                    type="datetime-local" 
+                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-neutral-800 text-sm"
+                    value={formData.fecha_inicio}
+                    onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+                    <Calendar size={16} className="text-primary-600" />
+                    Fin
+                  </label>
+                  <input 
+                    type="datetime-local" 
+                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-neutral-800 text-sm"
+                    value={formData.fecha_vencimiento}
+                    onChange={e => setFormData({...formData, fecha_vencimiento: e.target.value})}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+                  <Calendar size={16} className="text-primary-600" />
+                  Fecha y Hora
+                </label>
+                <input 
+                  type="datetime-local" 
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-neutral-800"
+                  value={formData.fecha_vencimiento}
+                  onChange={e => setFormData({...formData, fecha_vencimiento: e.target.value})}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-neutral-700 flex items-center gap-2">

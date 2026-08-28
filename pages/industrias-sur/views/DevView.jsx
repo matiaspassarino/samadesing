@@ -117,7 +117,9 @@ export default function DevView({ session }) {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo,
+        fecha_inicio: formData.fecha_inicio || null,
         fecha_vencimiento: formData.fecha_vencimiento,
+        contacto_id: formData.contacto_id || null,
       });
       if (error) throw error;
       
@@ -313,7 +315,9 @@ export default function DevView({ session }) {
         <TaskModal 
           onClose={() => setIsTaskModalOpen(false)}
           onSave={handleSaveGeneralTask}
-          vendedores={users} // Le pasamos todos los usuarios para que el Dev pueda elegir cualquiera
+          vendedores={users}
+          isDev={true}
+          session={session}
         />
       )}
     </div>

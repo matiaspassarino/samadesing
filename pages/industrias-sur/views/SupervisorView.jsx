@@ -97,7 +97,9 @@ export default function SupervisorView({ isDev, session }) {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo,
+        fecha_inicio: formData.fecha_inicio || null,
         fecha_vencimiento: formData.fecha_vencimiento,
+        contacto_id: formData.contacto_id || null,
       });
       if (error) throw error;
       
@@ -228,6 +230,8 @@ export default function SupervisorView({ isDev, session }) {
           onClose={() => setIsTaskModalOpen(false)}
           onSave={handleSaveGeneralTask}
           vendedores={vendedores}
+          isDev={isDev}
+          session={session}
         />
       )}
     </div>

@@ -168,13 +168,31 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
 
   const fetchHistorial = async () => {
     setLoadingHistorial(true);
-    const { data, error } = await supabase
+    
+    // Fetch interacciones
+    const { data: intData, error: intError } = await supabase
       .from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos')
       .select('*')
-      .eq('contacto_id', contacto.id)
-      .order('fecha_creacion', { ascending: false });
+      .eq('contacto_id', contacto.id);
+      
+    // Fetch tareas asociadas al contacto
+    const { data: tareasData, error: tareasError } = await supabase
+      .from(isDev ? 'tareas_agenda_sandbox' : 'tareas_agenda')
+      .select('*')
+      .eq('contacto_id', contacto.id);
+
+    let combinado = [];
+    if (!intError && intData) {
+      combinado = [...combinado, ...intData.map(item => ({...item, _isTarea: false}))];
+    }
+    if (!tareasError && tareasData) {
+      combinado = [...combinado, ...tareasData.map(item => ({...item, _isTarea: true}))];
+    }
     
-    if (!error && data) setHistorial(data);
+    // Ordenar descendente por fecha_creacion
+    combinado.sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
+    
+    setHistorial(combinado);
     setLoadingHistorial(false);
   };
 
@@ -685,14 +703,18 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
                           <div key={item.id} className="bg-white border border-neutral-200 p-4 rounded-xl shadow-sm">
                             <div className="flex justify-between items-start mb-2">
                               <span className="font-semibold text-sm text-neutral-800 flex items-center gap-2 flex-wrap">
-                                {item.tipo_accion}
-                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${item.resultado?.toLowerCase() === 'exitoso' ? 'bg-green-100 text-green-700' : item.resultado?.toLowerCase() === 'descartar' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                                  {item.resultado || 'Registro'}
+                                {item._isTarea ? `Tarea: ${item.titulo}` : item.tipo_accion}
+                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${
+                                  item._isTarea
+                                    ? item.completada ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                    : item.resultado?.toLowerCase() === 'exitoso' ? 'bg-green-100 text-green-700' : item.resultado?.toLowerCase() === 'descartar' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {item._isTarea ? (item.completada ? 'Completada' : 'Pendiente') : (item.resultado || 'Registro')}
                                 </span>
                               </span>
                               <span className="text-xs text-neutral-500 shrink-0 ml-2">{new Date(item.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
-                            <p className="text-sm text-neutral-600">{item.notas || 'Sin comentarios.'}</p>
+                            <p className="text-sm text-neutral-600">{item._isTarea ? item.descripcion || 'Sin descripción adicional.' : item.notas || 'Sin comentarios.'}</p>
                           </div>
                         ))}
                       </div>
