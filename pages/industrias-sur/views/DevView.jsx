@@ -77,9 +77,9 @@ export default function DevView() {
 
   const handleSeedSandbox = async () => {
     const mockLead = {
-      razon_social: `Mock Lead ${Math.floor(Math.random() * 1000)}`,
+      razon_social: `Mock Lead ${Math.floor(Math.random() * 10000)}`,
       estado_actual: 'Nuevo',
-      telefono: '1122334455',
+      telefono: `11${Math.floor(10000000 + Math.random() * 90000000)}`,
       fecha_creacion: new Date().toISOString()
     };
     const { error } = await supabase.from('contactos_sandbox').insert(mockLead);

@@ -2,11 +2,69 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, CheckCircle, Clock, Trash2, Save, Building2, Phone, MapPin, Loader2, Mail, Users, FileText, Check, AlertTriangle, ChevronRight, Plus, History } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { calcularEstadoTabs } from '../lib/validarAltaCliente';
+import { calcularEstadoTabs, validarAltaCliente } from '../lib/validarAltaCliente';
 
 const UNIDADES_NEGOCIO = ['Industrias Sur', 'Aries', 'Medús'];
 
+const CONDICIONES_IVA = [
+  'Responsable Inscripto',
+  'Monotributista',
+  'Exento',
+  'Consumidor Final',
+  'Sujeto No Categorizado'
+];
+
+const TabButton = ({ id, label, icon: Icon, status, activeTab, setActiveTab }) => (
+  <button
+    type="button"
+    onClick={(e) => { e.preventDefault(); setActiveTab(id); }}
+    className={`flex items-center gap-2 p-3 w-full text-left rounded-lg transition-colors ${activeTab === id ? 'bg-primary-50 text-primary-900 font-bold' : 'hover:bg-neutral-100 text-neutral-600 font-medium'}`}
+  >
+    <Icon size={18} className={activeTab === id ? 'text-primary-600' : 'text-neutral-400'} />
+    <span className="flex-1 text-sm">{label}</span>
+    {status === 'complete' && <CheckCircle size={16} className="text-green-500" />}
+    {status === 'incomplete' && <AlertTriangle size={16} className="text-yellow-500" />}
+    {status === 'optional' && <span className="text-xs text-neutral-400 font-normal">Opc.</span>}
+  </button>
+);
+
+const Input = ({ label, name, required, value, onChange, ...props }) => (
+  <div>
+    <label className="block text-xs font-semibold text-neutral-600 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      name={name}
+      value={value || ''}
+      onChange={onChange}
+      required={required}
+      className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+      {...props}
+    />
+  </div>
+);
+
+const Select = ({ label, name, required, value, onChange, options, ...props }) => (
+  <div>
+    <label className="block text-xs font-semibold text-neutral-600 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={value || ''}
+      onChange={onChange}
+      required={required}
+      className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+      {...props}
+    >
+      <option value="">Seleccione...</option>
+      {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
+  </div>
+);
+
 export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin', isDev = false }) {
+  const FORM_TABS_ORDER = ['Empresa', 'Contactos', 'Condiciones', 'Socios', 'Referencias'];
   const [activeTab, setActiveTab] = useState('Empresa');
   
   // Estado general
@@ -98,8 +156,57 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     setUnidades(prev => prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]);
   };
 
+  const handleConvertToClient = async () => {
+    const validacion = validarAltaCliente({
+      ...formData,
+      unidad_negocio: unidades.join(' , '),
+      socios: socios,
+      referencias_bancarias: refBancarias,
+      referencias_comerciales: refComerciales
+    });
+    
+    if (!validacion.esValido) {
+      const tabs = Object.keys(validacion.porTab).join(', ');
+      toast.error(`Faltan completar campos obligatorios en: ${tabs}.`, { duration: 5000 });
+      return;
+    }
+
+    setSavingInfo(true);
+    const updateData = {
+      ...formData,
+      unidad_negocio: unidades.join(' , '),
+      socios: socios,
+      referencias_bancarias: refBancarias,
+      referencias_comerciales: refComerciales,
+      estado_actual: 'Venta'
+    };
+
+    const { error } = await supabase
+      .from(isDev ? 'contactos_sandbox' : 'contactos')
+      .update(updateData)
+      .eq('id', contacto.id);
+      
+    if (error) {
+      toast.error('Error al convertir a cliente.');
+    } else {
+      toast.success('¡Contacto convertido a Cliente exitosamente!');
+      
+      await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert({
+        contacto_id: contacto.id,
+        tipo_accion: 'Alta de Cliente',
+        resultado: 'Exitoso',
+        notas: 'Se completaron todos los datos y se convirtió a cliente.',
+        completada: true
+      });
+      
+      if(onRefresh) onRefresh();
+      onClose();
+    }
+    setSavingInfo(false);
+  };
+
   const handleSaveContactInfo = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setSavingInfo(true);
     
     const updateData = {
@@ -160,34 +267,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     setter(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
-  const TabButton = ({ id, label, icon: Icon, status }) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={`flex items-center gap-2 p-3 w-full text-left rounded-lg transition-colors ${activeTab === id ? 'bg-primary-50 text-primary-900 font-bold' : 'hover:bg-neutral-100 text-neutral-600 font-medium'}`}
-    >
-      <Icon size={18} className={activeTab === id ? 'text-primary-600' : 'text-neutral-400'} />
-      <span className="flex-1 text-sm">{label}</span>
-      {status === 'complete' && <CheckCircle size={16} className="text-green-500" />}
-      {status === 'incomplete' && <AlertTriangle size={16} className="text-yellow-500" />}
-      {status === 'optional' && <span className="text-xs text-neutral-400 font-normal">Opc.</span>}
-    </button>
-  );
 
-  const Input = ({ label, name, required, ...props }) => (
-    <div>
-      <label className="block text-xs font-semibold text-neutral-600 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        name={name}
-        value={formData[name] || ''}
-        onChange={handleChange}
-        required={required}
-        className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-        {...props}
-      />
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
@@ -213,13 +293,13 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
           {/* Sidebar Navigation */}
           <div className="lg:w-64 border-r border-neutral-200 bg-white flex flex-col shrink-0 overflow-y-auto hidden lg:flex p-4 gap-1">
             <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2 px-3">Formulario</h4>
-            <TabButton id="Empresa" label="Empresa" icon={Building2} status={tabStatus.empresa} />
-            <TabButton id="Contactos" label="Contactos" icon={Users} status={tabStatus.contactos} />
-            <TabButton id="Condiciones" label="Condiciones Comerciales" icon={FileText} status={tabStatus.condiciones} />
-            <TabButton id="Socios" label="Socios de la firma" icon={Users} status={tabStatus.socios} />
-            <TabButton id="Referencias" label="Referencias" icon={FileText} status={tabStatus.referencias} />
+            <TabButton id="Empresa" label="Empresa" icon={Building2} status={tabStatus.empresa} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton id="Contactos" label="Contactos" icon={Users} status={tabStatus.contactos} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton id="Condiciones" label="Condiciones Comerciales" icon={FileText} status={tabStatus.condiciones} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton id="Socios" label="Socios de la firma" icon={Users} status={tabStatus.socios} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton id="Referencias" label="Referencias" icon={FileText} status={tabStatus.referencias} activeTab={activeTab} setActiveTab={setActiveTab} />
             <div className="h-px bg-neutral-200 my-2"></div>
-            <TabButton id="Historial" label="Historial e Interacción" icon={History} status="neutral" />
+            <TabButton id="Historial" label="Historial e Interacción" icon={History} status="neutral" activeTab={activeTab} setActiveTab={setActiveTab} />
           </div>
 
           {/* Mobile Select Tab (Solo visible en pantallas pequeñas) */}
@@ -240,27 +320,27 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
 
           {/* Content Area */}
           <div className="flex-1 flex flex-col overflow-y-auto bg-white relative">
-            <form onSubmit={handleSaveContactInfo} className="p-5 lg:p-8 max-w-3xl w-full mx-auto">
+            <form onSubmit={handleSaveContactInfo} className={activeTab === 'Historial' ? 'hidden' : 'p-5 lg:p-8 max-w-3xl w-full mx-auto'}>
               
               {activeTab === 'Empresa' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                   <h4 className="text-lg font-bold text-neutral-800 mb-6 flex items-center gap-2"><Building2 className="text-primary-500" /> Información de la Empresa</h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <Input label="Razón Social" name="razon_social" required />
-                    <Input label="Nombre Comercial (Si aplica)" name="nombre_comercial" required />
-                    <Input label="CUIT" name="cuit" required />
-                    <Input label="Condición de IVA" name="condicion_iva" required />
-                    <Input label="Ingresos Brutos" name="ingresos_brutos" />
-                    <Input label="País" name="pais" required />
+                    <Input label="Razón Social" name="razon_social" required value={formData.razon_social} onChange={handleChange} />
+                    <Input label="Nombre Comercial (Si aplica)" name="nombre_comercial" required value={formData.nombre_comercial} onChange={handleChange} />
+                    <Input label="CUIT" name="cuit" required value={formData.cuit} onChange={handleChange} />
+                    <Select label="Condición de IVA" name="condicion_iva" required options={CONDICIONES_IVA} value={formData.condicion_iva} onChange={handleChange} />
+                    <Input label="Ingresos Brutos" name="ingresos_brutos" value={formData.ingresos_brutos} onChange={handleChange} />
+                    <Input label="País" name="pais" required value={formData.pais} onChange={handleChange} />
                   </div>
 
                   <h5 className="font-semibold text-neutral-700 text-sm mb-3">Dirección</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="md:col-span-2"><Input label="Dirección Legal" name="domicilio" required /></div>
-                    <Input label="Localidad" name="localidad" required />
-                    <Input label="Provincia/Estado" name="provincia" required />
-                    <Input label="Código Postal" name="codigo_postal" required />
+                    <div className="md:col-span-2"><Input label="Dirección Legal" name="domicilio" required value={formData.domicilio} onChange={handleChange} /></div>
+                    <Input label="Localidad" name="localidad" required value={formData.localidad} onChange={handleChange} />
+                    <Input label="Provincia/Estado" name="provincia" required value={formData.provincia} onChange={handleChange} />
+                    <Input label="Código Postal" name="codigo_postal" required value={formData.codigo_postal} onChange={handleChange} />
                   </div>
 
                   <h5 className="font-semibold text-neutral-700 text-sm mb-3">Unidades de Negocio Interesadas</h5>
@@ -282,18 +362,18 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
                   <div className="bg-neutral-50 p-5 rounded-xl border border-neutral-200 mb-6">
                     <h5 className="font-bold text-neutral-700 mb-4 flex items-center gap-2">Responsable de Compras</h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2"><Input label="Nombre y Apellido" name="resp_compras_nombre" required /></div>
-                      <Input label="Teléfono" name="resp_compras_telefono" type="tel" required />
-                      <Input label="Email" name="resp_compras_email" type="email" required />
+                      <div className="md:col-span-2"><Input label="Nombre y Apellido" name="resp_compras_nombre" required value={formData.resp_compras_nombre} onChange={handleChange} /></div>
+                      <Input label="Teléfono" name="resp_compras_telefono" type="tel" required value={formData.resp_compras_telefono} onChange={handleChange} />
+                      <Input label="Email" name="resp_compras_email" type="email" required value={formData.resp_compras_email} onChange={handleChange} />
                     </div>
                   </div>
 
                   <div className="bg-neutral-50 p-5 rounded-xl border border-neutral-200 mb-6">
                     <h5 className="font-bold text-neutral-700 mb-4 flex items-center gap-2">Responsable de Pagos</h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2"><Input label="Nombre y Apellido" name="resp_pagos_nombre" required /></div>
-                      <Input label="Teléfono" name="resp_pagos_telefono" type="tel" required />
-                      <Input label="Email" name="resp_pagos_email" type="email" required />
+                      <div className="md:col-span-2"><Input label="Nombre y Apellido" name="resp_pagos_nombre" required value={formData.resp_pagos_nombre} onChange={handleChange} /></div>
+                      <Input label="Teléfono" name="resp_pagos_telefono" type="tel" required value={formData.resp_pagos_telefono} onChange={handleChange} />
+                      <Input label="Email" name="resp_pagos_email" type="email" required value={formData.resp_pagos_email} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -306,12 +386,12 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
                   <div className="mb-8">
                     <h5 className="font-bold text-neutral-700 mb-4">Logística y Facturación (Carga Vendedor)</h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2"><Input label="Nombre de la empresa (Facturación)" name="nombre_facturacion" required /></div>
-                      <div className="md:col-span-2"><Input label="Domicilio de Entrega" name="domicilio_entrega" required /></div>
-                      <Input label="Localidad de Entrega" name="localidad_entrega" required />
-                      <Input label="Provincia de Entrega" name="provincia_entrega" required />
-                      <Input label="Horario de Atención" name="horario_atencion" placeholder="Ej: Lun a Vie 9 a 18hs" required />
-                      <Input label="Transporte / Condiciones de entrega" name="transporte_entrega" required />
+                      <div className="md:col-span-2"><Input label="Nombre de la empresa (Facturación)" name="nombre_facturacion" required value={formData.nombre_facturacion} onChange={handleChange} /></div>
+                      <div className="md:col-span-2"><Input label="Domicilio de Entrega" name="domicilio_entrega" required value={formData.domicilio_entrega} onChange={handleChange} /></div>
+                      <Input label="Localidad de Entrega" name="localidad_entrega" required value={formData.localidad_entrega} onChange={handleChange} />
+                      <Input label="Provincia de Entrega" name="provincia_entrega" required value={formData.provincia_entrega} onChange={handleChange} />
+                      <Input label="Horario de Atención" name="horario_atencion" placeholder="Ej: Lun a Vie 9 a 18hs" required value={formData.horario_atencion} onChange={handleChange} />
+                      <Input label="Transporte / Condiciones de entrega" name="transporte_entrega" required value={formData.transporte_entrega} onChange={handleChange} />
                     </div>
                   </div>
 
@@ -319,8 +399,8 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
                     <div className="bg-primary-50 p-5 rounded-xl border border-primary-200">
                       <h5 className="font-bold text-primary-900 mb-4 flex items-center gap-2">🛡️ Autorización Crediticia (Solo Admin)</h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input label="Condiciones de pago (plazo)" name="condiciones_pago" required={userRole === 'Admin'} />
-                        <Input label="Límites crediticios" name="limite_crediticio" required={userRole === 'Admin'} />
+                        <Input label="Condiciones de pago (plazo)" name="condiciones_pago" required={userRole === 'Admin'} value={formData.condiciones_pago} onChange={handleChange} />
+                        <Input label="Límites crediticios" name="limite_crediticio" required={userRole === 'Admin'} value={formData.limite_crediticio} onChange={handleChange} />
                         <div className="md:col-span-2">
                           <label className="block text-xs font-semibold text-primary-900 mb-1">Observaciones comerciales</label>
                           <textarea
@@ -444,11 +524,47 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
 
               {/* Botón Flotante de Guardado para pestañas de formulario */}
               {activeTab !== 'Historial' && (
-                <div className="sticky bottom-0 mt-8 pt-4 pb-2 bg-gradient-to-t from-white via-white to-transparent border-t border-neutral-100 flex justify-end">
-                  <button type="submit" disabled={savingInfo} className="px-6 py-3 rounded-xl font-bold bg-primary-500 hover:bg-primary-900 text-white transition-colors flex items-center gap-2 shadow-lg disabled:opacity-50">
-                    {savingInfo ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} 
-                    Guardar Sección
-                  </button>
+                <div className="sticky bottom-0 mt-8 pt-4 pb-2 bg-white border-t border-neutral-100 flex items-center justify-between gap-3 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] px-2">
+                  <div>
+                    {FORM_TABS_ORDER.indexOf(activeTab) > 0 && (
+                      <button 
+                        type="button" 
+                        onClick={() => setActiveTab(FORM_TABS_ORDER[FORM_TABS_ORDER.indexOf(activeTab) - 1])}
+                        className="px-4 py-2.5 rounded-xl font-bold text-neutral-600 hover:bg-neutral-100 transition-colors"
+                      >
+                        Anterior
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button type="submit" disabled={savingInfo} className="px-4 py-2.5 rounded-xl font-bold bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors flex items-center gap-2 disabled:opacity-50">
+                      {savingInfo ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
+                      Guardar
+                    </button>
+                    
+                    {FORM_TABS_ORDER.indexOf(activeTab) < FORM_TABS_ORDER.length - 1 ? (
+                      <button 
+                        type="button" 
+                        onClick={async (e) => {
+                          await handleSaveContactInfo(e);
+                          setActiveTab(FORM_TABS_ORDER[FORM_TABS_ORDER.indexOf(activeTab) + 1]);
+                        }}
+                        className="px-5 py-2.5 rounded-xl font-bold bg-primary-500 hover:bg-primary-600 text-white transition-colors flex items-center gap-2 shadow-md"
+                      >
+                        Siguiente <ChevronRight size={18} />
+                      </button>
+                    ) : (
+                      <button 
+                        type="button" 
+                        onClick={handleConvertToClient}
+                        disabled={savingInfo}
+                        className="px-5 py-2.5 rounded-xl font-bold bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center gap-2 shadow-md"
+                      >
+                        <Check size={18} /> Convertir a Cliente
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </form>
