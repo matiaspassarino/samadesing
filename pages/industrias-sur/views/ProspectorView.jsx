@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '../lib/supabase';
-import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2, Users } from 'lucide-react';
+import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2, Users, Eye } from 'lucide-react';
 import ResolutionModal from '../components/ResolutionModal';
+import ContactDetailsModal from '../components/ContactDetailsModal';
 import { toast } from 'react-hot-toast';
 
 export default function ProspectorView({ isDev }) {
@@ -14,6 +15,7 @@ export default function ProspectorView({ isDev }) {
   const [contactos, setContactos] = useState([]);
   const [loadingContactos, setLoadingContactos] = useState(true);
   const [selectedContacto, setSelectedContacto] = useState(null);
+  const [viewContact, setViewContact] = useState(null);
 
   // --- LÓGICA DE IMPORTACIÓN CSV ---
   const handleFileUpload = (e) => {
@@ -260,6 +262,13 @@ export default function ProspectorView({ isDev }) {
                 <td className="px-4 py-3 hidden sm:table-cell">{c.provincia || '-'}</td>
                 <td className="px-4 py-3 hidden md:table-cell">{new Date(c.fecha_creacion).toLocaleDateString('es-AR')}</td>
                 <td className="px-4 py-3 flex justify-end gap-2">
+                  <button 
+                    onClick={() => setViewContact(c)}
+                    className="text-neutral-400 hover:text-primary-600 p-1.5 transition-colors"
+                    title="Ver detalle"
+                  >
+                    <Eye size={18} />
+                  </button>
                   {activeTab === 'perdidos' ? (
                     <button 
                       onClick={() => handleReingresar(c)}
@@ -414,11 +423,20 @@ export default function ProspectorView({ isDev }) {
         </div>
       )}
 
-            {selectedContacto && (
+      {selectedContacto && (
         <ResolutionModal
           task={{ leadName: selectedContacto.razon_social }}
           onClose={() => setSelectedContacto(null)}
           onSave={handleSaveResolution}
+        />
+      )}
+
+      {viewContact && (
+        <ContactDetailsModal 
+          contactoId={viewContact.id}
+          isDev={isDev}
+          onClose={() => setViewContact(null)}
+          onContactUpdated={fetchContactos}
         />
       )}
     </div>
