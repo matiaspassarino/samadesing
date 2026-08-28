@@ -428,6 +428,7 @@ export default function ProspectorView({ isDev }) {
           task={{ leadName: selectedContacto.razon_social }}
           onClose={() => setSelectedContacto(null)}
           onSave={handleSaveResolution}
+          onEditLead={() => setViewContact(selectedContacto)}
         />
       )}
 

@@ -9,7 +9,7 @@ const OPTIONS = [
   { id: 'fallido', label: 'Fallido / Negativo', desc: 'Marcar como perdido', icon: ThumbsDown, bgActive: 'bg-red-500 border-red-500 text-white', hoverClass: 'hover:bg-red-500 hover:border-red-500 hover:text-white' },
 ];
 
-export default function ResolutionModal({ task, onClose, onSave }) {
+export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [deferDate, setDeferDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -40,9 +40,20 @@ export default function ResolutionModal({ task, onClose, onSave }) {
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-neutral-200">
-          <div>
+          <div className="flex-1">
             <h2 className="font-heading font-bold text-xl text-neutral-800">Registrar Contacto</h2>
-            <p className="text-sm text-neutral-500 font-medium">{task?.leadName}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm text-neutral-500 font-medium truncate max-w-[200px] sm:max-w-xs">{task?.leadName}</p>
+              {onEditLead && (
+                <button 
+                  type="button" 
+                  onClick={onEditLead} 
+                  className="text-[10px] sm:text-xs font-bold bg-neutral-100 text-neutral-700 border border-neutral-200 px-2 py-1 rounded-md hover:bg-neutral-200 hover:text-neutral-900 transition-colors shadow-sm shrink-0"
+                >
+                  ✏️ Actualizar Datos
+                </button>
+              )}
+            </div>
           </div>
           <button 
             onClick={onClose}

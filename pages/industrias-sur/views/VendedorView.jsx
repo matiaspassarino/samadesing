@@ -299,6 +299,7 @@ export default function VendedorView({ session, isDev }) {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onSave={handleSaveResolution}
+          onEditLead={() => handleViewDetails(selectedTask)}
         />
       )}
 
