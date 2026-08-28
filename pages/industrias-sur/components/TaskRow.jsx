@@ -24,13 +24,15 @@ export default function TaskRow({ task, onComplete, onViewDetails, compact = fal
 
       {/* Acción Derecha */}
       <div className={`flex items-center gap-2 ${compact ? 'w-full' : ''}`}>
-        <button 
-          onClick={onViewDetails}
-          className="flex-shrink-0 p-2 text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
-          title="Ver y Editar Detalles"
-        >
-          <Eye size={20} />
-        </button>
+        {onViewDetails && (
+          <button 
+            onClick={onViewDetails}
+            className="flex-shrink-0 p-2 text-primary-600 hover:text-primary-900 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+            title="Ver y Editar Detalles"
+          >
+            <Eye size={20} />
+          </button>
+        )}
         <button 
           onClick={onComplete}
           className={`bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm ${compact ? 'flex-1' : 'flex-shrink-0'}`}

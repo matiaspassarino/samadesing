@@ -5,10 +5,12 @@ import { validarAltaCliente } from '../lib/validarAltaCliente';
 import TaskRow from '../components/TaskRow';
 import ResolutionModal from '../components/ResolutionModal';
 import ContactDetailsModal from '../components/ContactDetailsModal';
-import { Inbox, Users, Loader2 } from 'lucide-react';
+import TaskModal from '../components/TaskModal';
+import { Inbox, Users, Loader2, Calendar as CalendarIcon, Plus } from 'lucide-react';
 
 const TABS = [
   { id: 'bandeja', label: 'Bandeja', icon: Inbox },
+  { id: 'agenda', label: 'Agenda', icon: CalendarIcon },
   { id: 'clientes', label: 'Clientes', icon: Users },
 ];
 
@@ -19,11 +21,13 @@ export default function VendedorView({ session, isDev }) {
   const [tareas, setTareas] = useState([]);
   const [oportunidades, setOportunidades] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [agendaItems, setAgendaItems] = useState([]);
   
   const [loading, setLoading] = useState(true);
   
   const [selectedTask, setSelectedTask] = useState(null); // Tarea para completar (ResolutionModal)
   const [viewContact, setViewContact] = useState(null); // Contacto para ver detalles (ContactDetailsModal)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false); // Modal para nueva tarea
 
   const fetchTabData = async () => {
     setLoading(true);
@@ -79,12 +83,57 @@ export default function VendedorView({ session, isDev }) {
           const mapped = {
             id: t.id,
             isInteraction: true,
+            isAgendaTask: false,
             lead_id: t.contacto_id,
             leadName: t.contactos?.razon_social || 'Desconocido',
             status: t.contactos?.estado_actual || t.tipo_accion,
             urgencyText: isOverdue ? 'Vencida' : (dueDay.getTime() === today.getTime() ? 'Vence hoy' : `Vence el ${formatter.format(dueDate)}`),
             badgeColor,
             isOverdue
+          };
+
+          if (isTodayOrPast) {
+            nuevasTareas.push(mapped);
+          } else {
+            nuevasOportunidades.push(mapped);
+          }
+        });
+      }
+
+      // 3. Fetch tareas generales de agenda para combinarlas en la bandeja
+      let queryTareasAgenda = supabase
+        .from(isDev ? 'tareas_agenda_sandbox' : 'tareas_agenda')
+        .select('*')
+        .eq('completada', false);
+        
+      if (session?.user?.id) queryTareasAgenda = queryTareasAgenda.eq('vendedor_id', session.user.id);
+
+      const { data: agendaData } = await queryTareasAgenda;
+      
+      if (agendaData) {
+        agendaData.forEach(t => {
+          const dueDate = t.fecha_vencimiento ? new Date(t.fecha_vencimiento) : new Date();
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const dueDay = new Date(dueDate);
+          dueDay.setHours(0,0,0,0);
+          
+          const isOverdue = dueDay < today;
+          const isTodayOrPast = dueDay <= today;
+
+          const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short' });
+
+          const mapped = {
+            id: t.id,
+            isInteraction: false,
+            isAgendaTask: true,
+            lead_id: t.contacto_id,
+            leadName: t.titulo,
+            status: t.tipo,
+            urgencyText: isOverdue ? 'Vencida' : (dueDay.getTime() === today.getTime() ? 'Vence hoy' : `Vence el ${formatter.format(dueDate)}`),
+            badgeColor: 'bg-secondary-50 text-secondary-900',
+            isOverdue,
+            rawTask: t
           };
 
           if (isTodayOrPast) {
@@ -119,6 +168,72 @@ export default function VendedorView({ session, isDev }) {
         }));
         setClientes(mappedCl);
       }
+    } else if (activeTab === 'agenda') {
+      let nuevasAgenda = [];
+      
+      // 1. Fetch interacciones pendientes (leads)
+      let queryInteracciones = supabase
+        .from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos')
+        .select(`id, tipo_accion, fecha_vencimiento, completada, contacto_id, contactos!inner(razon_social, estado_actual, vendedor_id)`)
+        .eq('completada', false)
+        .in('contactos.estado_actual', ['Rellamar', 'Recontacto', 'Diferido', 'Cotizado', 'Asignado', 'Venta', 'Recompra']);
+        
+      if (session?.user?.id) queryInteracciones = queryInteracciones.eq('contactos.vendedor_id', session.user.id);
+      
+      const { data: interaccionesData } = await queryInteracciones;
+      
+      if (interaccionesData) {
+        interaccionesData.forEach(t => {
+          const dueDate = t.fecha_vencimiento ? new Date(t.fecha_vencimiento) : new Date();
+          const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+          
+          nuevasAgenda.push({
+            id: t.id,
+            isInteraction: true,
+            isAgendaTask: false,
+            lead_id: t.contacto_id,
+            leadName: `Llamar: ${t.contactos?.razon_social || 'Desconocido'}`,
+            status: t.contactos?.estado_actual || t.tipo_accion,
+            urgencyText: formatter.format(dueDate),
+            badgeColor: 'bg-primary-50 text-primary-900',
+            dateValue: dueDate.getTime()
+          });
+        });
+      }
+
+      // 2. Fetch tareas generales de agenda
+      let queryTareasAgenda = supabase
+        .from(isDev ? 'tareas_agenda_sandbox' : 'tareas_agenda')
+        .select('*')
+        .eq('completada', false);
+        
+      if (session?.user?.id) queryTareasAgenda = queryTareasAgenda.eq('vendedor_id', session.user.id);
+      
+      const { data: agendaData } = await queryTareasAgenda;
+      
+      if (agendaData) {
+        agendaData.forEach(t => {
+          const dueDate = t.fecha_vencimiento ? new Date(t.fecha_vencimiento) : new Date();
+          const formatter = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+          
+          nuevasAgenda.push({
+            id: t.id,
+            isInteraction: false,
+            isAgendaTask: true,
+            lead_id: t.contacto_id, // Puede ser null
+            leadName: t.titulo,
+            status: t.tipo,
+            urgencyText: formatter.format(dueDate),
+            badgeColor: 'bg-secondary-50 text-secondary-900',
+            dateValue: dueDate.getTime(),
+            rawTask: t
+          });
+        });
+      }
+      
+      // Ordenar cronológicamente
+      nuevasAgenda.sort((a, b) => a.dateValue - b.dateValue);
+      setAgendaItems(nuevasAgenda);
     }
     
     setLoading(false);
@@ -128,7 +243,44 @@ export default function VendedorView({ session, isDev }) {
     fetchTabData();
   }, [activeTab, isDev]);
 
-  const handleActionClick = (item) => setSelectedTask(item);
+  const handleActionClick = async (item) => {
+    if (item.isAgendaTask) {
+      // Completar tarea general directamente
+      try {
+        await supabase
+          .from(isDev ? 'tareas_agenda_sandbox' : 'tareas_agenda')
+          .update({ completada: true })
+          .eq('id', item.id);
+        toast.success('Tarea completada');
+        fetchTabData();
+      } catch (error) {
+        toast.error('Error al completar la tarea');
+      }
+    } else {
+      setSelectedTask(item);
+    }
+  };
+
+  const handleSaveGeneralTask = async (formData) => {
+    try {
+      const { error } = await supabase.from(isDev ? 'tareas_agenda_sandbox' : 'tareas_agenda').insert({
+        vendedor_id: session?.user?.id,
+        creador_id: session?.user?.id,
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        tipo: formData.tipo,
+        fecha_vencimiento: formData.fecha_vencimiento,
+      });
+      if (error) throw error;
+      
+      toast.success('Tarea creada exitosamente');
+      fetchTabData();
+    } catch (error) {
+      toast.error('Error al crear tarea: ' + error.message);
+      console.error(error);
+      throw error;
+    }
+  };
 
   const handleViewDetails = async (item) => {
 
@@ -247,7 +399,7 @@ export default function VendedorView({ session, isDev }) {
                   key={item.id} 
                   task={item} 
                   onComplete={() => handleActionClick(item)}
-                  onViewDetails={() => handleViewDetails(item)}
+                  onViewDetails={item.isAgendaTask ? null : () => handleViewDetails(item)}
                 />
               ))
             )}
@@ -267,13 +419,90 @@ export default function VendedorView({ session, isDev }) {
                   task={item} 
                   compact={true}
                   onComplete={() => handleActionClick(item)}
-                  onViewDetails={() => handleViewDetails(item)}
+                  onViewDetails={item.isAgendaTask ? null : () => handleViewDetails(item)}
                 />
               ))
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'agenda' ? (() => {
+        // Agrupar por día
+        const grouped = agendaItems.reduce((acc, item) => {
+          const date = new Date(item.dateValue);
+          date.setHours(0,0,0,0);
+          const time = date.getTime();
+          if (!acc[time]) acc[time] = [];
+          acc[time].push(item);
+          return acc;
+        }, {});
+
+        const sortedDays = Object.keys(grouped).sort((a,b) => a - b);
+
+        return (
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold text-neutral-800">Mi Agenda</h3>
+              <button 
+                onClick={() => setIsTaskModalOpen(true)}
+                className="bg-primary-900 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 shrink-0"
+              >
+                <Plus size={16} />
+                Agregar Tarea
+              </button>
+            </div>
+            
+            {agendaItems.length === 0 ? (
+              <div className="text-center p-12 bg-white rounded-xl border border-neutral-200 shadow-sm">
+                <p className="text-neutral-500">No hay tareas pendientes en tu agenda.</p>
+              </div>
+            ) : (
+              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x items-start">
+                {sortedDays.map(timestamp => {
+                  const dayDate = new Date(parseInt(timestamp));
+                  const today = new Date();
+                  today.setHours(0,0,0,0);
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  const isPast = dayDate < today;
+                  
+                  let dayLabel = dayDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' });
+                  dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
+                  
+                  let headerClass = 'text-neutral-700 bg-neutral-200/50';
+                  if (dayDate.getTime() === today.getTime()) {
+                    dayLabel = "Hoy - " + dayLabel;
+                    headerClass = 'text-primary-800 bg-primary-100';
+                  } else if (dayDate.getTime() === tomorrow.getTime()) {
+                    dayLabel = "Mañana - " + dayLabel;
+                  } else if (isPast) {
+                    dayLabel = "Vencido - " + dayLabel;
+                    headerClass = 'text-danger-800 bg-danger/10 border-danger/20';
+                  }
+
+                  return (
+                    <div key={timestamp} className="bg-neutral-100/70 p-3 rounded-2xl min-w-[320px] max-w-[320px] shrink-0 border border-neutral-200 flex flex-col gap-3 snap-start">
+                      <div className={`font-semibold px-3 py-1.5 rounded-lg text-sm border border-transparent ${headerClass}`}>
+                        {dayLabel}
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {grouped[timestamp].map(item => (
+                          <TaskRow 
+                            key={item.id} 
+                            task={item} 
+                            compact={true}
+                            onComplete={() => handleActionClick(item)}
+                            onViewDetails={item.isAgendaTask ? null : () => handleViewDetails(item)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })() : (
         /* Clientes Tab */
         <div className="flex flex-col gap-3">
           {clientes.length === 0 ? (
@@ -300,6 +529,13 @@ export default function VendedorView({ session, isDev }) {
           onClose={() => setSelectedTask(null)}
           onSave={handleSaveResolution}
           onEditLead={() => handleViewDetails(selectedTask)}
+        />
+      )}
+
+      {isTaskModalOpen && (
+        <TaskModal 
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={handleSaveGeneralTask}
         />
       )}
 

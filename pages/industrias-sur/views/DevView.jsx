@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Shield, Users, Database, Loader2, Save } from 'lucide-react';
+import { Shield, Users, Database, Loader2, Save, Plus, Calendar } from 'lucide-react';
+import TaskModal from '../components/TaskModal';
 import { toast } from 'react-hot-toast';
 
-export default function DevView() {
+export default function DevView({ session }) {
   const [users, setUsers] = useState([]);
+  const [globalTasks, setGlobalTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [metrics, setMetrics] = useState({ leads: 0, tareas: 0 });
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -19,6 +22,18 @@ export default function DevView() {
     const { count: leadsCount } = await supabase.from('contactos_sandbox').select('*', { count: 'exact', head: true });
     const { count: tareasCount } = await supabase.from('interacciones_contactos_sandbox').select('*', { count: 'exact', head: true });
     
+    // Traer tareas globales de agenda sin el JOIN (ya que no hay FK en la tabla sandbox a perfiles)
+    const { data: tareasGlobales, error: tareasGlobalesError } = await supabase
+      .from('tareas_agenda_sandbox')
+      .select('*')
+      .order('fecha_creacion', { ascending: false });
+
+    if (tareasGlobalesError) {
+      console.error('Error fetching global tasks:', tareasGlobalesError);
+    } else if (tareasGlobales) {
+      setGlobalTasks(tareasGlobales);
+    }
+
     setMetrics({
       leads: leadsCount || 0,
       tareas: tareasCount || 0
@@ -90,6 +105,31 @@ export default function DevView() {
     }
   };
 
+  const handleSaveGeneralTask = async (formData) => {
+    if (!formData.vendedor_id) {
+      toast.error('Debes seleccionar un usuario para asignar la tarea.');
+      throw new Error('Usuario no seleccionado');
+    }
+    try {
+      const { error } = await supabase.from('tareas_agenda_sandbox').insert({
+        vendedor_id: formData.vendedor_id,
+        creador_id: session?.user?.id,
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        tipo: formData.tipo,
+        fecha_vencimiento: formData.fecha_vencimiento,
+      });
+      if (error) throw error;
+      
+      toast.success('Tarea global asignada exitosamente (Sandbox)');
+      fetchData();
+    } catch (error) {
+      toast.error('Error al guardar: ' + error.message);
+      console.error(error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary-500" size={32} /></div>;
   }
@@ -152,6 +192,13 @@ export default function DevView() {
           >
             Limpiar Datos Sandbox
           </button>
+          <button 
+            onClick={() => setIsTaskModalOpen(true)}
+            className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100 px-4 py-2 rounded-lg font-medium transition-colors border border-secondary-200 flex items-center gap-2"
+          >
+            <Calendar size={18} />
+            Generar Tarea Global
+          </button>
         </div>
       </div>
 
@@ -212,6 +259,63 @@ export default function DevView() {
           </table>
         </div>
       </div>
+
+      {/* TAREAS DE AGENDA GLOBALES */}
+      <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50 flex justify-between items-center">
+          <h3 className="font-semibold text-neutral-800 flex items-center gap-2">
+            <Calendar size={18} className="text-neutral-500" />
+            Tareas Globales Asignadas (Sandbox)
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          {globalTasks.length === 0 ? (
+            <div className="p-8 text-center text-neutral-500 text-sm">No hay tareas globales en sandbox.</div>
+          ) : (
+            <table className="w-full text-left text-sm text-neutral-600">
+              <thead className="bg-white border-b border-neutral-200">
+                <tr>
+                  <th className="px-6 py-3 font-semibold text-neutral-500">Título</th>
+                  <th className="px-6 py-3 font-semibold text-neutral-500">Asignado A</th>
+                  <th className="px-6 py-3 font-semibold text-neutral-500">Tipo</th>
+                  <th className="px-6 py-3 font-semibold text-neutral-500">Estado</th>
+                  <th className="px-6 py-3 font-semibold text-neutral-500">Vencimiento</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {globalTasks.map(task => {
+                  const assignedUser = users.find(u => u.id === task.vendedor_id);
+                  return (
+                    <tr key={task.id} className="hover:bg-neutral-50">
+                      <td className="px-6 py-3 font-medium text-neutral-800">{task.titulo}</td>
+                      <td className="px-6 py-3">{assignedUser ? assignedUser.nombre_completo : 'Desconocido'}</td>
+                      <td className="px-6 py-3">{task.tipo}</td>
+                      <td className="px-6 py-3">
+                        {task.completada ? (
+                          <span className="text-success font-medium">Completada</span>
+                        ) : (
+                          <span className="text-warning font-medium">Pendiente</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3">
+                        {task.fecha_vencimiento ? new Date(task.fecha_vencimiento).toLocaleString('es-AR') : '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {isTaskModalOpen && (
+        <TaskModal 
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={handleSaveGeneralTask}
+          vendedores={users} // Le pasamos todos los usuarios para que el Dev pueda elegir cualquiera
+        />
+      )}
     </div>
   );
 }

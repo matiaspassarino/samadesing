@@ -105,10 +105,10 @@ export default function App() {
 
       {/* Renderizado condicional basado en el SIMULATED ROLE */}
       <main className="max-w-7xl mx-auto px-4 py-6 w-full flex-1">
-        {simulatedRole === 'Dev' && <DevView />}
+        {simulatedRole === 'Dev' && <DevView session={session} />}
         {simulatedRole === 'Administrador' && <AdminView isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Prospector' && <ProspectorView isDev={userRole === 'Dev'} />}
-        {simulatedRole === 'Supervisor' && <SupervisorView isDev={userRole === 'Dev'} />}
+        {simulatedRole === 'Supervisor' && <SupervisorView session={session} isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Vendedor' && <VendedorView session={session} isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Gerente' && <GerenteView isDev={userRole === 'Dev'} />}
         

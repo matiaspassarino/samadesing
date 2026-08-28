@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Users, CheckSquare, Square, UserPlus, Loader2, Eye } from 'lucide-react';
+import { Users, CheckSquare, Square, UserPlus, Loader2, Eye, Plus } from 'lucide-react';
 import ContactDetailsModal from '../components/ContactDetailsModal';
+import TaskModal from '../components/TaskModal';
 import { toast } from 'react-hot-toast';
 
-export default function SupervisorView({ isDev }) {
+export default function SupervisorView({ isDev, session }) {
   const [contactos, setContactos] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [selectedContactos, setSelectedContactos] = useState(new Set());
@@ -12,8 +13,9 @@ export default function SupervisorView({ isDev }) {
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   
-  // Para el modal
+  // Para modales
   const [contactoToView, setContactoToView] = useState(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -83,6 +85,30 @@ export default function SupervisorView({ isDev }) {
     setAssigning(false);
   };
 
+  const handleSaveGeneralTask = async (formData) => {
+    if (!formData.vendedor_id) {
+      toast.error('Debes seleccionar un vendedor para asignar la tarea.');
+      throw new Error('Vendedor no seleccionado');
+    }
+    try {
+      const { error } = await supabase.from(isDev ? 'tareas_agenda_sandbox' : 'tareas_agenda').insert({
+        vendedor_id: formData.vendedor_id,
+        creador_id: session?.user?.id,
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        tipo: formData.tipo,
+        fecha_vencimiento: formData.fecha_vencimiento,
+      });
+      if (error) throw error;
+      
+      toast.success('Tarea asignada exitosamente');
+    } catch (error) {
+      toast.error('Error al asignar tarea: ' + error.message);
+      console.error(error);
+      throw error;
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200">
       {isDev && (
@@ -92,12 +118,21 @@ export default function SupervisorView({ isDev }) {
       )}
 
       <div className="mb-6 flex flex-col gap-4 border-b border-neutral-200 pb-4">
-        <div>
-          <h2 className="font-heading font-bold text-2xl text-neutral-800 flex items-center gap-2">
-            <Users className="text-primary-500" />
-            Asignación de Contactos (Supervisor)
-          </h2>
-          <p className="text-neutral-500">Contactos exitosos listos para asignar a un vendedor.</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="font-heading font-bold text-2xl text-neutral-800 flex items-center gap-2">
+              <Users className="text-primary-500" />
+              Asignación (Supervisor)
+            </h2>
+            <p className="text-neutral-500">Asigna leads y tareas a los vendedores.</p>
+          </div>
+          <button 
+            onClick={() => setIsTaskModalOpen(true)}
+            className="bg-secondary-900 hover:bg-secondary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 shrink-0"
+          >
+            <Plus size={16} />
+            Crear Tarea para Vendedor
+          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-neutral-50 p-3 rounded-lg border border-neutral-200">
@@ -185,6 +220,14 @@ export default function SupervisorView({ isDev }) {
           onRefresh={fetchData} 
           userRole="Supervisor"
           isDev={isDev}
+        />
+      )}
+
+      {isTaskModalOpen && (
+        <TaskModal 
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={handleSaveGeneralTask}
+          vendedores={vendedores}
         />
       )}
     </div>
