@@ -6,6 +6,26 @@
   NODE_VERSION = "20"
 
 [[redirects]]
+  from = "/pages/industrias-sur/*"
+  to = "/pages/industrias-sur/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pages/industrias-sur"
+  to = "/pages/industrias-sur/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pages/estudio-juridico/*"
+  to = "/pages/estudio-juridico/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/pages/estudio-juridico"
+  to = "/pages/estudio-juridico/index.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
