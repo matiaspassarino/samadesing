@@ -433,10 +433,11 @@ export default function ProspectorView({ isDev }) {
 
       {viewContact && (
         <ContactDetailsModal 
-          contactoId={viewContact.id}
+          contacto={viewContact}
           isDev={isDev}
           onClose={() => setViewContact(null)}
-          onContactUpdated={fetchContactos}
+          onRefresh={fetchContactos}
+          userRole="Prospector"
         />
       )}
     </div>
