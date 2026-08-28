@@ -29,3 +29,4 @@ VALUES
   'Homero Compras', '1133224455', 'h.compras@test.com', 'Marge Pagos', '1133224466', 'm.pagos@test.com',
   'Asignado', 'Aries', null
 );
+ALTER TABLE public.contactos_sandbox ADD COLUMN IF NOT EXISTS telefono_whatsapp BOOLEAN DEFAULT false;

@@ -14,6 +14,33 @@ const CONDICIONES_IVA = [
   'Sujeto No Categorizado'
 ];
 
+const PROVINCIAS_LOCALIDADES = {
+  'Buenos Aires': ['La Plata', 'Mar del Plata', 'Bahía Blanca', 'Tandil', 'Olavarría', 'San Nicolás', 'Pergamino', 'Junín', 'Campana', 'Zárate', 'Pilar', 'Tigre'],
+  'CABA': ['CABA'],
+  'Catamarca': ['Catamarca (Capital)', 'Valle Viejo', 'Andalgalá', 'Tinogasta'],
+  'Chaco': ['Resistencia', 'Sáenz Peña', 'Villa Ángela', 'Charata'],
+  'Chubut': ['Comodoro Rivadavia', 'Trelew', 'Puerto Madryn', 'Esquel', 'Rawson'],
+  'Córdoba': ['Córdoba Capital', 'Villa Carlos Paz', 'Río Cuarto', 'Alta Gracia', 'Villa María', 'San Francisco', 'Jesus María', 'Carlos Paz', 'Río Tercero'],
+  'Corrientes': ['Corrientes', 'Goya', 'Paso de los Libres', 'Curuzú Cuatiá', 'Mercedes'],
+  'Entre Ríos': ['Paraná', 'Concordia', 'Gualeguaychú', 'Concepción del Uruguay', 'Villaguay'],
+  'Formosa': ['Formosa', 'Clorinda', 'Pirané'],
+  'Jujuy': ['San Salvador de Jujuy', 'San Pedro', 'Palpalá', 'Libertador Gral. San Martín'],
+  'La Pampa': ['Santa Rosa', 'General Pico', 'Toay', 'Victorica'],
+  'La Rioja': ['La Rioja', 'Chilecito', 'Chamical'],
+  'Mendoza': ['Mendoza', 'San Rafael', 'Godoy Cruz', 'Luján de Cuyo', 'Maipú', 'Guaymallén', 'Las Heras'],
+  'Misiones': ['Posadas', 'Oberá', 'Eldorado', 'Puerto Iguazú'],
+  'Neuquén': ['Neuquén', 'San Martín de los Andes', 'Zapala', 'Cutral Có', 'Centenario'],
+  'Río Negro': ['Bariloche', 'Roca', 'Cipolletti', 'Viedma', 'Villa Regina'],
+  'Salta': ['Salta', 'Orán', 'Tartagal', 'General Güemes'],
+  'San Juan': ['San Juan', 'Rawson', 'Rivadavia', 'Chimbas'],
+  'San Luis': ['San Luis', 'Villa Mercedes', 'Merlo', 'Juana Koslay'],
+  'Santa Cruz': ['Río Gallegos', 'Caleta Olivia', 'El Calafate', 'Pico Truncado'],
+  'Santa Fe': ['Santa Fe', 'Rosario', 'Rafaela', 'Venado Tuerto', 'Reconquista', 'Santo Tomé', 'San Lorenzo'],
+  'Santiago del Estero': ['Santiago del Estero', 'La Banda', 'Termas de Río Hondo'],
+  'Tierra del Fuego': ['Ushuaia', 'Río Grande', 'Tolhuin'],
+  'Tucumán': ['San Miguel de Tucumán', 'Tafí Viejo', 'Concepción', 'Yerba Buena', 'Banda del Río Salí']
+};
+
 const TabButton = ({ id, label, icon: Icon, status, activeTab, setActiveTab }) => (
   <button
     type="button"
@@ -80,6 +107,9 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     cuit: contacto.cuit || '',
     condicion_iva: contacto.condicion_iva || '',
     ingresos_brutos: contacto.ingresos_brutos || '',
+    telefono: contacto.telefono || '',
+    telefono_whatsapp: contacto.telefono_whatsapp || false,
+    email: contacto.email || '',
     // Contactos
     resp_compras_nombre: contacto.resp_compras_nombre || '',
     resp_compras_telefono: contacto.resp_compras_telefono || '',
@@ -149,11 +179,37 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let { name, value, type, checked } = e.target;
+    
+    if (type === 'checkbox') {
+      value = checked;
+    } else {
+      if (name === 'cuit') {
+        value = value.replace(/\D/g, '').slice(0, 11);
+      }
+      if (name === 'telefono' || name === 'resp_compras_telefono' || name === 'resp_pagos_telefono') {
+        value = value.replace(/\D/g, '');
+      }
+      if (name === 'provincia') {
+        // Reset localidad if provincia changes
+        setFormData(prev => ({ ...prev, [name]: value, localidad: '' }));
+        return;
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleToggleUnidad = (u) => {
     setUnidades(prev => prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]);
+  };
+
+  const validateEmails = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) return 'El Email Principal no es válido (falta @ o dominio).';
+    if (formData.resp_compras_email && !emailRegex.test(formData.resp_compras_email)) return 'El Email de Compras no es válido.';
+    if (formData.resp_pagos_email && !emailRegex.test(formData.resp_pagos_email)) return 'El Email de Pagos no es válido.';
+    return null;
   };
 
   const handleConvertToClient = async () => {
@@ -168,6 +224,12 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     if (!validacion.esValido) {
       const tabs = Object.keys(validacion.porTab).join(', ');
       toast.error(`Faltan completar campos obligatorios en: ${tabs}.`, { duration: 5000 });
+      return;
+    }
+
+    const emailError = validateEmails();
+    if (emailError) {
+      toast.error(emailError, { duration: 5000 });
       return;
     }
 
@@ -207,6 +269,13 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
 
   const handleSaveContactInfo = async (e) => {
     if (e) e.preventDefault();
+    
+    const emailError = validateEmails();
+    if (emailError) {
+      toast.error(emailError, { duration: 5000 });
+      return;
+    }
+
     setSavingInfo(true);
     
     const updateData = {
@@ -327,20 +396,46 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
                   <h4 className="text-lg font-bold text-neutral-800 mb-6 flex items-center gap-2"><Building2 className="text-primary-500" /> Información de la Empresa</h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <Input label="Razón Social" name="razon_social" required value={formData.razon_social} onChange={handleChange} />
+                    <div className="md:col-span-2"><Input label="Razón Social" name="razon_social" required value={formData.razon_social} onChange={handleChange} /></div>
                     <Input label="Nombre Comercial (Si aplica)" name="nombre_comercial" required value={formData.nombre_comercial} onChange={handleChange} />
-                    <Input label="CUIT" name="cuit" required value={formData.cuit} onChange={handleChange} />
+                    <Input label="CUIT (Solo números)" name="cuit" required value={formData.cuit} onChange={handleChange} placeholder="Ej: 30111111118" />
                     <Select label="Condición de IVA" name="condicion_iva" required options={CONDICIONES_IVA} value={formData.condicion_iva} onChange={handleChange} />
                     <Input label="Ingresos Brutos" name="ingresos_brutos" value={formData.ingresos_brutos} onChange={handleChange} />
-                    <Input label="País" name="pais" required value={formData.pais} onChange={handleChange} />
+                    
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-neutral-100 mt-2">
+                      <Input label="Email Principal" name="email" type="email" required value={formData.email} onChange={handleChange} />
+                      <div>
+                        <Input label="Teléfono (Sin 0 ni 15, solo números)" name="telefono" type="tel" required value={formData.telefono} onChange={handleChange} placeholder="Ej: 3515555555" />
+                        <label className="flex items-center gap-2 mt-2 cursor-pointer text-sm font-medium text-neutral-600">
+                          <input type="checkbox" name="telefono_whatsapp" checked={formData.telefono_whatsapp} onChange={handleChange} className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                          <span>Es número de WhatsApp</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <h5 className="font-semibold text-neutral-700 text-sm mb-3">Dirección</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="md:col-span-2"><Input label="Dirección Legal" name="domicilio" required value={formData.domicilio} onChange={handleChange} /></div>
-                    <Input label="Localidad" name="localidad" required value={formData.localidad} onChange={handleChange} />
-                    <Input label="Provincia/Estado" name="provincia" required value={formData.provincia} onChange={handleChange} />
+                    <Input label="País" name="pais" required value={formData.pais} onChange={handleChange} />
+                    <Select 
+                      label="Provincia/Estado" 
+                      name="provincia" 
+                      required 
+                      options={Object.keys(PROVINCIAS_LOCALIDADES)} 
+                      value={formData.provincia} 
+                      onChange={handleChange} 
+                    />
+                    <Select 
+                      label="Localidad" 
+                      name="localidad" 
+                      required 
+                      options={formData.provincia ? (PROVINCIAS_LOCALIDADES[formData.provincia] || []) : []} 
+                      value={formData.localidad} 
+                      onChange={handleChange} 
+                      disabled={!formData.provincia}
+                    />
                     <Input label="Código Postal" name="codigo_postal" required value={formData.codigo_postal} onChange={handleChange} />
+                    <div className="md:col-span-2"><Input label="Dirección Legal" name="domicilio" required value={formData.domicilio} onChange={handleChange} /></div>
                   </div>
 
                   <h5 className="font-semibold text-neutral-700 text-sm mb-3">Unidades de Negocio Interesadas</h5>

@@ -70,3 +70,6 @@ CREATE TABLE public.personas_contacto (
 
 ALTER TABLE public.personas_contacto ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Permitir todo en personas_contacto" ON public.personas_contacto FOR ALL USING (true) WITH CHECK (true);
+
+-- Añadir campo whatsapp
+ALTER TABLE public.contactos ADD COLUMN IF NOT EXISTS telefono_whatsapp BOOLEAN DEFAULT false;
