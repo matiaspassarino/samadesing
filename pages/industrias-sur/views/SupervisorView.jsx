@@ -18,13 +18,20 @@ export default function SupervisorView({ isDev }) {
   const fetchData = async () => {
     setLoading(true);
 
+    const vendQuery = supabase.from('perfiles').select('*');
+    if (isDev) {
+      vendQuery.in('rol', ['Vendedor', 'Dev']);
+    } else {
+      vendQuery.eq('rol', 'Vendedor');
+    }
+
     const [contactosRes, vendRes] = await Promise.all([
       supabase.from(isDev ? 'contactos_sandbox' : 'contactos')
         .select('*')
         .is('vendedor_id', null)
         .eq('estado_actual', 'Supervisor')
         .order('fecha_actualizacion', { ascending: false }),
-      supabase.from('perfiles').select('*').eq('rol', 'Vendedor')
+      vendQuery
     ]);
     
     if (contactosRes.data) setContactos(contactosRes.data);
@@ -101,7 +108,9 @@ export default function SupervisorView({ isDev }) {
           >
             <option value="">Seleccionar Vendedor...</option>
             {vendedores.map(v => (
-              <option key={v.id} value={v.id}>{v.nombre_completo} ({v.email})</option>
+              <option key={v.id} value={v.id}>
+                {v.rol === 'Dev' ? '[Dev] ' : ''}{v.nombre_completo} ({v.email})
+              </option>
             ))}
           </select>
           <button
