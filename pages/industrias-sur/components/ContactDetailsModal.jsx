@@ -90,6 +90,15 @@ const Select = ({ label, name, required, value, onChange, options, ...props }) =
   </div>
 );
 
+const getFriendlyErrorMessage = (errorMsg) => {
+  if (!errorMsg) return 'Error desconocido.';
+  const msg = errorMsg.toLowerCase();
+  if (msg.includes('email_key')) return 'El correo electrónico (email) ya está registrado en otro cliente.';
+  if (msg.includes('telefono_key')) return 'El número de teléfono ya está registrado en otro cliente.';
+  if (msg.includes('cuit_key')) return 'El CUIT ya está registrado en otro cliente.';
+  return errorMsg;
+};
+
 export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin', isDev = false }) {
   const FORM_TABS_ORDER = ['Empresa', 'Contactos', 'Condiciones', 'Socios', 'Referencias'];
   const [activeTab, setActiveTab] = useState('Empresa');
@@ -304,7 +313,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
       
     if (error) {
       console.error(error);
-      toast.error(`Error al convertir a cliente: ${error.message}`);
+      toast.error(`Error al convertir a cliente: ${getFriendlyErrorMessage(error.message)}`);
     } else {
       toast.success('¡Contacto convertido a Cliente exitosamente!');
       
@@ -368,7 +377,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
       
     if (error) {
       console.error(error);
-      toast.error(`Error al actualizar la información: ${error.message}`);
+      toast.error(`Error al actualizar la información: ${getFriendlyErrorMessage(error.message)}`);
     } else {
       toast.success('Información guardada correctamente.');
       if(onRefresh) onRefresh();
