@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { getTable } from '../lib/db';
 import { toast } from 'react-hot-toast';
+import confetti from 'canvas-confetti';
 import { validarAltaCliente } from '../lib/validarAltaCliente';
 import { addPuntos } from '../lib/gamificacion';
 import TaskRow from '../components/TaskRow';
@@ -566,6 +567,16 @@ export default function VendedorView({ session, isDev }) {
     if (resolutionData.option !== 'fallido' && resolutionData.option !== 'no_contesta') {
       const validRefId = typeof selectedTask.id === 'string' && selectedTask.id.startsWith('new-') ? selectedTask.lead_id : selectedTask.id;
       await addPuntos(session?.user?.id, resolutionData.option, validRefId, isDev);
+
+      if (resolutionData.option === 'venta' || resolutionData.option === 'recompra') {
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#22c55e', '#16a34a', '#fde047', '#eab308', '#ffffff'],
+          zIndex: 9999
+        });
+      }
     }
 
     setSelectedTask(null);

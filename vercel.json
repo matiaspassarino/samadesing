@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/pages/industrias-sur(.*)",
+      "destination": "/pages/industrias-sur/index.html"
+    },
+    {
+      "source": "/pages/estudio-juridico(.*)",
+      "destination": "/pages/estudio-juridico/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

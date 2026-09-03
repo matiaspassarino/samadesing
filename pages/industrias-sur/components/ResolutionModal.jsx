@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, PhoneCall, CalendarClock, ThumbsDown, BookOpen, FileText, PhoneOff, ShoppingBag } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 const LEAD_OPTIONS = [
   { id: 'venta', label: 'Venta', desc: 'Convierte en cliente', icon: ShoppingBag, bgActive: 'bg-emerald-500 border-emerald-500 text-white', hoverClass: 'hover:bg-emerald-500 hover:border-emerald-500 hover:text-white' },
@@ -64,8 +65,13 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-800/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-800/40 backdrop-blur-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="bg-white w-full max-w-lg rounded-2xl shadow-xl flex flex-col max-h-[90vh]"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-neutral-200">
@@ -190,7 +196,7 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
           </button>
         </div>
 
-      </div>
+      </motion.div>
     </div>
   );
 }

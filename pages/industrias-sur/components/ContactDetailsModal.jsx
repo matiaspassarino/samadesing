@@ -303,7 +303,8 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
       .eq('id', contacto.id);
       
     if (error) {
-      toast.error('Error al convertir a cliente.');
+      console.error(error);
+      toast.error(`Error al convertir a cliente: ${error.message}`);
     } else {
       toast.success('¡Contacto convertido a Cliente exitosamente!');
       
@@ -366,7 +367,8 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
       .eq('id', contacto.id);
       
     if (error) {
-      toast.error('Error al actualizar la información.');
+      console.error(error);
+      toast.error(`Error al actualizar la información: ${error.message}`);
     } else {
       toast.success('Información guardada correctamente.');
       if(onRefresh) onRefresh();
