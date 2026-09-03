@@ -73,3 +73,8 @@ CREATE POLICY "Permitir todo en personas_contacto" ON public.personas_contacto F
 
 -- Añadir campo whatsapp
 ALTER TABLE public.contactos ADD COLUMN IF NOT EXISTS telefono_whatsapp BOOLEAN DEFAULT false;
+
+
+-- 6. Sistema de Prioridades
+ALTER TABLE public.contactos ADD COLUMN IF NOT EXISTS prioridad TEXT DEFAULT 'Media';
+ALTER TABLE public.contactos_sandbox ADD COLUMN IF NOT EXISTS prioridad TEXT DEFAULT 'Media';

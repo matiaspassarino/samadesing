@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { getTable } from '../lib/db';
 import { Loader2, TrendingUp, Users, Target, Clock, Calendar } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -39,8 +40,8 @@ export default function GerenteView({ isDev }) {
     // REAL DB FETCH
     try {
       const [contRes, intRes, perfRes] = await Promise.all([
-        supabase.from(isDev ? 'contactos_sandbox' : 'contactos').select('id, estado_actual, unidad_negocio, provincia, vendedor_id, fecha_creacion'),
-        supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').select('id, contacto_id, completada, fecha_creacion, fecha_vencimiento'),
+        supabase.from(getTable('contactos', isDev)).select('id, estado_actual, unidad_negocio, provincia, vendedor_id, fecha_creacion'),
+        supabase.from(getTable('interacciones_contactos', isDev)).select('id, contacto_id, completada, fecha_creacion, fecha_vencimiento'),
         supabase.from('perfiles').select('id, nombre_completo, rol')
       ]);
 
@@ -50,7 +51,7 @@ export default function GerenteView({ isDev }) {
         perfiles: perfRes.data || []
       });
     } catch (e) {
-      console.error(e);
+      // Manejado silenciosamente o enviar a logger
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export default function GerenteView({ isDev }) {
     // 2. Funnel Data
     const funnel = {
       'Ingresados': totalLeads,
-      'Supervisor (Filtro)': contactos.filter(c => c.estado_actual === 'Supervisor').length,
+      'Prospector (Filtro)': contactos.filter(c => c.estado_actual === 'Nuevo').length,
       'En Proceso (Vendedor)': leadsEnProceso,
       'Ganados (Venta/Recompra)': leadsVenta,
       'Perdidos': contactos.filter(c => c.estado_actual === 'Descartado').length

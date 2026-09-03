@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { supabase } from '../lib/supabase';
-import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2, Users, Eye } from 'lucide-react';
+import { Upload, Database, Loader2, FileText, PhoneCall, RefreshCw, Sparkles, Clock, Trash2, Users, Eye, Filter, X, ChevronDown } from 'lucide-react';
 import ResolutionModal from '../components/ResolutionModal';
 import ContactDetailsModal from '../components/ContactDetailsModal';
 import { toast } from 'react-hot-toast';
@@ -16,6 +16,26 @@ export default function ProspectorView({ isDev }) {
   const [loadingContactos, setLoadingContactos] = useState(true);
   const [selectedContacto, setSelectedContacto] = useState(null);
   const [viewContact, setViewContact] = useState(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [assignVendedorId, setAssignVendedorId] = useState("");
+  const [assignPrioridad, setAssignPrioridad] = useState("Media");
+  const [selectedClientes, setSelectedClientes] = useState([]);
+  const [isReactivacion, setIsReactivacion] = useState(false);
+  const [vendedores, setVendedores] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // --- NUEVOS ESTADOS PARA FILTROS ---
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    provincia: '',
+    condicion_iva: '',
+    unidad_negocio: '',
+    estado_actual: '',
+    vendedor_id: '',
+    tiene_email: '',
+    tiene_telefono: '',
+    tiene_whatsapp: ''
+  });
 
   // --- LÓGICA DE IMPORTACIÓN CSV ---
   const handleFileUpload = (e) => {
@@ -156,6 +176,15 @@ export default function ProspectorView({ isDev }) {
   };
 
   // --- LÓGICA DE GESTIÓN DE CONTACTOS ---
+  const fetchVendedores = async () => {
+    const { data } = await supabase.from("perfiles").select("id, nombre_completo, email").in("rol", ["Vendedor", "Dev"]);
+    if (data) setVendedores(data);
+  };
+
+  useEffect(() => {
+    fetchVendedores();
+  }, []);
+
   const fetchContactos = async () => {
     setLoadingContactos(true);
 
@@ -163,6 +192,7 @@ export default function ProspectorView({ isDev }) {
     if (activeTab === 'nuevos') estadoQuery = ['Nuevo'];
     else if (activeTab === 'recontactos') estadoQuery = ['Admin_Rellamar'];
     else if (activeTab === 'perdidos') estadoQuery = ['Descartado'];
+    // if activeTab === 'todos', fetch all
 
     if (estadoQuery.length > 0) {
       const { data: contactosData, error } = await supabase
@@ -170,11 +200,15 @@ export default function ProspectorView({ isDev }) {
         .select('*')
         .in('estado_actual', estadoQuery)
         .order('fecha_creacion', { ascending: false });
-
-      if (!error && contactosData) {
-        setContactos(contactosData);
-      }
+      if (!error && contactosData) setContactos(contactosData);
+    } else {
+      const { data: contactosData, error } = await supabase
+        .from(isDev ? 'contactos_sandbox' : 'contactos')
+        .select('*')
+        .order('fecha_creacion', { ascending: false });
+      if (!error && contactosData) setContactos(contactosData);
     }
+
     setLoadingContactos(false);
   };
 
@@ -198,8 +232,11 @@ export default function ProspectorView({ isDev }) {
     let nuevoEstado = selectedContacto.estado_actual;
     
     if (resolutionData.option === 'exit') {
-      nuevoEstado = 'Supervisor'; // Deriva a Supervisor
-      toast.success('Lead calificado y derivado a Supervisor');
+      setSelectedClientes([selectedContacto.id]);
+      setIsAssignModalOpen(true);
+      toast.success('Llamada registrada. Por favor, asigna este cliente a un vendedor.');
+      setSelectedContacto(null);
+      return;
     } else if (resolutionData.option === 'fallido') {
       nuevoEstado = 'Descartado';
       toast.success('Lead descartado');
@@ -231,64 +268,315 @@ export default function ProspectorView({ isDev }) {
     }
   };
 
+
+  const handleMassAssign = async () => {
+    if (!assignVendedorId || selectedClientes.length === 0) {
+      toast.error('Selecciona un vendedor y al menos un cliente.');
+      return;
+    }
+    setLoading(true);
+    
+    const estadoAsignacion = isReactivacion ? 'CLIENTE REACTIVADO' : 'Asignado';
+    
+    const { error } = await supabase
+      .from(isDev ? 'contactos_sandbox' : 'contactos')
+      .update({ vendedor_id: assignVendedorId, estado_actual: estadoAsignacion, prioridad: assignPrioridad })
+      .in('id', selectedClientes);
+    
+    if (!error) {
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const tasksToInsert = selectedClientes.map(clientId => ({
+        contacto_id: clientId,
+        tipo_accion: isReactivacion ? 'Reactivación de Cliente' : 'Primer Contacto',
+        completada: false,
+        fecha_vencimiento: endOfDay.toISOString()
+      }));
+      
+      await supabase.from(isDev ? 'interacciones_contactos_sandbox' : 'interacciones_contactos').insert(tasksToInsert);
+    }
+
+    setLoading(false);
+    if (error) {
+      toast.error('Error al asignar vendedores.');
+    } else {
+      toast.success('Vendedor asignado a contactos.');
+      setIsAssignModalOpen(false);
+      setAssignVendedorId('');
+      setAssignPrioridad('Media');
+      setIsReactivacion(false);
+      setSelectedClientes([]);
+      fetchContactos();
+    }
+  };
+
   const renderTable = () => {
     if (loadingContactos) return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary-500" size={32} /></div>;
     
-    if (contactos.length === 0) {
-      return (
-        <div className="text-center p-12 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 text-neutral-500">
-          No hay contactos en esta vista.
-        </div>
-      );
-    }
+    const filteredContactos = contactos.filter(c => {
+      const matchSearch = c.razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          c.cuit?.includes(searchTerm) || 
+                          c.telefono?.includes(searchTerm);
+      
+      const matchProvincia = filters.provincia ? c.provincia === filters.provincia : true;
+      const matchCondicionIva = filters.condicion_iva ? c.condicion_iva === filters.condicion_iva : true;
+      const matchUnidadNegocio = filters.unidad_negocio ? c.unidad_negocio === filters.unidad_negocio : true;
+      const matchEstado = filters.estado_actual ? c.estado_actual === filters.estado_actual : true;
+      const matchVendedor = filters.vendedor_id ? c.vendedor_id === filters.vendedor_id : true;
+      const matchEmail = filters.tiene_email === 'si' ? !!c.email : (filters.tiene_email === 'no' ? !c.email : true);
+      const matchTelefono = filters.tiene_telefono === 'si' ? !!c.telefono : (filters.tiene_telefono === 'no' ? !c.telefono : true);
+      const matchWhatsapp = filters.tiene_whatsapp === 'si' ? c.telefono_whatsapp === true : (filters.tiene_whatsapp === 'no' ? c.telefono_whatsapp === false : true);
+
+      return matchSearch && matchProvincia && matchCondicionIva && matchUnidadNegocio && matchEstado && matchVendedor && matchEmail && matchTelefono && matchWhatsapp;
+    });
+
+    const opcionesProvincia = [...new Set(contactos.map(c => c.provincia).filter(Boolean))].sort();
+    const opcionesCondicionIva = [...new Set(contactos.map(c => c.condicion_iva).filter(Boolean))].sort();
+    const opcionesUnidadNegocio = [...new Set(contactos.map(c => c.unidad_negocio).filter(Boolean))].sort();
+    const opcionesEstado = [...new Set(contactos.map(c => c.estado_actual).filter(Boolean))].sort();
 
     return (
-      <div className="overflow-x-auto border border-neutral-200 rounded-lg bg-white">
-        <table className="w-full text-left text-sm text-neutral-600">
-          <thead className="bg-neutral-50 text-neutral-800 border-b border-neutral-200">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Razón Social</th>
-              <th className="px-4 py-3 font-semibold">Teléfono</th>
-              <th className="px-4 py-3 font-semibold hidden sm:table-cell">Provincia</th>
-              <th className="px-4 py-3 font-semibold hidden md:table-cell">Fecha Ingreso</th>
-              <th className="px-4 py-3 font-semibold text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-200">
-            {contactos.map((c) => (
-              <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
-                <td className="px-4 py-3 font-medium text-neutral-800">{c.razon_social}</td>
-                <td className="px-4 py-3">{c.telefono || '-'}</td>
-                <td className="px-4 py-3 hidden sm:table-cell">{c.provincia || '-'}</td>
-                <td className="px-4 py-3 hidden md:table-cell">{new Date(c.fecha_creacion).toLocaleDateString('es-AR')}</td>
-                <td className="px-4 py-3 flex justify-end gap-2">
-                  <button 
-                    onClick={() => setViewContact(c)}
-                    className="text-neutral-400 hover:text-primary-600 p-1.5 transition-colors"
-                    title="Ver detalle"
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="bg-white p-3 rounded-lg border border-neutral-200 shadow-sm flex items-center gap-2 flex-1 max-w-md">
+            <Database className="text-neutral-400" size={18} />
+            <input 
+              type="text"
+              placeholder="Buscar por nombre, CUIT o teléfono..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 outline-none bg-transparent text-sm text-neutral-700"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-2.5 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
+              showFilters || Object.values(filters).some(v => v !== '') 
+                ? 'bg-primary-50 border-primary-200 text-primary-700' 
+                : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+            }`}
+          >
+            <Filter size={18} />
+            Filtros
+            {Object.values(filters).some(v => v !== '') && (
+              <span className="bg-primary-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full ml-1">
+                {Object.values(filters).filter(v => v !== '').length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* PANEL DE FILTROS */}
+        {showFilters && (
+          <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Provincia</label>
+              <div className="relative">
+                <select 
+                  value={filters.provincia}
+                  onChange={(e) => setFilters({...filters, provincia: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Todas</option>
+                  {opcionesProvincia.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Condición IVA</label>
+              <div className="relative">
+                <select 
+                  value={filters.condicion_iva}
+                  onChange={(e) => setFilters({...filters, condicion_iva: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Todas</option>
+                  {opcionesCondicionIva.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Unidad Negocio</label>
+              <div className="relative">
+                <select 
+                  value={filters.unidad_negocio}
+                  onChange={(e) => setFilters({...filters, unidad_negocio: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Todas</option>
+                  {opcionesUnidadNegocio.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {activeTab === 'todos' && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Estado Actual</label>
+                <div className="relative">
+                  <select 
+                    value={filters.estado_actual}
+                    onChange={(e) => setFilters({...filters, estado_actual: e.target.value})}
+                    className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                   >
-                    <Eye size={18} />
-                  </button>
-                  {activeTab === 'perdidos' ? (
-                    <button 
-                      onClick={() => handleReingresar(c)}
-                      className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                    >
-                      <RefreshCw size={16} /> Reingresar
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => setSelectedContacto(c)}
-                      className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                    >
-                      <PhoneCall size={16} /> Contactar
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <option value="">Todos</option>
+                    {opcionesEstado.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+                </div>
+              </div>
+            )}
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Vendedor</label>
+              <div className="relative">
+                <select 
+                  value={filters.vendedor_id}
+                  onChange={(e) => setFilters({...filters, vendedor_id: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Todos</option>
+                  {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre_completo || v.email}</option>)}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Email</label>
+              <div className="relative">
+                <select 
+                  value={filters.tiene_email}
+                  onChange={(e) => setFilters({...filters, tiene_email: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Indistinto</option>
+                  <option value="si">Con Email</option>
+                  <option value="no">Sin Email</option>
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Teléfono</label>
+              <div className="relative">
+                <select 
+                  value={filters.tiene_telefono}
+                  onChange={(e) => setFilters({...filters, tiene_telefono: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Indistinto</option>
+                  <option value="si">Con Teléfono</option>
+                  <option value="no">Sin Teléfono</option>
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">WhatsApp</label>
+              <div className="relative">
+                <select 
+                  value={filters.tiene_whatsapp}
+                  onChange={(e) => setFilters({...filters, tiene_whatsapp: e.target.value})}
+                  className="w-full appearance-none bg-white border border-neutral-300 text-neutral-700 py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Indistinto</option>
+                  <option value="si">Con WhatsApp</option>
+                  <option value="no">Sin WhatsApp</option>
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-2.5 text-neutral-400 pointer-events-none" />
+              </div>
+            </div>
+            
+            <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex justify-end">
+               <button 
+                  onClick={() => setFilters({
+                    provincia: '', condicion_iva: '', unidad_negocio: '', estado_actual: '', vendedor_id: '', tiene_email: '', tiene_telefono: '', tiene_whatsapp: ''
+                  })}
+                  className="text-sm text-neutral-500 hover:text-neutral-800 font-medium flex items-center gap-1 transition-colors"
+               >
+                 <X size={16} /> Limpiar filtros
+               </button>
+            </div>
+          </div>
+        )}
+
+        {filteredContactos.length === 0 ? (
+          <div className="text-center p-12 bg-neutral-50 rounded-xl border border-dashed border-neutral-300 text-neutral-500">
+            No hay contactos que coincidan.
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-neutral-200 rounded-lg bg-white">
+            <table className="w-full text-left text-sm text-neutral-600">
+              <thead className="bg-neutral-50 text-neutral-800 border-b border-neutral-200">
+                <tr>
+                  <th className="px-4 py-3 w-10">
+                    <input 
+                      type="checkbox" 
+                      onChange={(e) => setSelectedClientes(e.target.checked ? filteredContactos.map(c => c.id) : [])} 
+                      checked={filteredContactos.length > 0 && selectedClientes.length === filteredContactos.length} 
+                      className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" 
+                    />
+                  </th>
+                  <th className="px-4 py-3 font-semibold">Razón Social</th>
+                  <th className="px-4 py-3 font-semibold">Teléfono</th>
+                  <th className="px-4 py-3 font-semibold hidden sm:table-cell">Provincia</th>
+                  <th className="px-4 py-3 font-semibold hidden md:table-cell">Fecha Ingreso</th>
+                  <th className="px-4 py-3 font-semibold text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {filteredContactos.map((c) => (
+                  <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedClientes.includes(c.id)} 
+                        onChange={(e) => setSelectedClientes(prev => e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id))} 
+                        className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500" 
+                      />
+                    </td>
+                    <td className="px-4 py-3 font-medium text-neutral-800">{c.razon_social}</td>
+                    <td className="px-4 py-3">{c.telefono || '-'}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{c.provincia || '-'}</td>
+                    <td className="px-4 py-3 hidden md:table-cell">{new Date(c.fecha_creacion).toLocaleDateString('es-AR')}</td>
+                    <td className="px-4 py-3 flex justify-end gap-2">
+                      <button 
+                        onClick={() => setViewContact(c)}
+                        className="text-neutral-400 hover:text-primary-600 p-1.5 transition-colors"
+                        title="Ver detalle"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      {activeTab === 'perdidos' ? (
+                        <button 
+                          onClick={() => handleReingresar(c)}
+                          className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                        >
+                          <RefreshCw size={16} /> Reingresar
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => setSelectedContacto(c)}
+                          className="bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                        >
+                          <PhoneCall size={16} /> Contactar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   };
@@ -334,6 +622,13 @@ export default function ProspectorView({ isDev }) {
           <div className="w-px bg-neutral-300 mx-1 self-stretch hidden sm:block"></div>
           <div className="w-full sm:hidden h-px bg-neutral-300 my-0.5"></div>
 
+          <button 
+            onClick={() => setActiveTab('todos')}
+            className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'todos' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+          >
+            <Database size={16} /> Base General
+          </button>
+          
           <button 
             onClick={() => setActiveTab('importar')}
             className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'importar' ? 'bg-white text-primary-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
@@ -413,12 +708,21 @@ export default function ProspectorView({ isDev }) {
               {activeTab === 'nuevos' && 'Contactos Recientes'}
               {activeTab === 'recontactos' && 'Pendientes de Rellamada'}
               {activeTab === 'perdidos' && 'Contactos Descartados'}
+              {activeTab === 'todos' && 'Base General'}
             </h3>
             <span className="bg-primary-100 text-primary-800 text-xs font-bold px-2 py-1 rounded-full">
               {contactos.length} Totales
             </span>
           </div>
 
+          {selectedClientes.length > 0 && (activeTab === 'nuevos' || activeTab === 'todos') && (
+            <div className="bg-primary-50 border border-primary-200 p-4 rounded-xl mb-4 flex items-center justify-between">
+              <span className="font-semibold text-primary-900">{selectedClientes.length} contactos seleccionados</span>
+              <button onClick={() => setIsAssignModalOpen(true)} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors flex items-center gap-2">
+                Asignar a Vendedor
+              </button>
+            </div>
+          )}
           {renderTable()}
         </div>
       )}
@@ -440,6 +744,57 @@ export default function ProspectorView({ isDev }) {
           onRefresh={fetchContactos}
           userRole="Prospector"
         />
+      )}
+      {isAssignModalOpen && (
+        <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
+            <div className="p-6">
+              <h3 className="font-bold text-lg text-neutral-800 mb-2">Asignar Contactos</h3>
+              <p className="text-sm text-neutral-600 mb-6">Selecciona a qué vendedor quieres asignar los <strong>{selectedClientes.length}</strong> clientes seleccionados.</p>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-neutral-700 mb-1">Vendedor</label>
+                <select
+                  value={assignVendedorId}
+                  onChange={(e) => setAssignVendedorId(e.target.value)}
+                  className="w-full border border-neutral-200 rounded-lg p-3 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                >
+                  <option value="">Seleccione vendedor...</option>
+                  {vendedores.map(v => (
+                    <option key={v.id} value={v.id}>{v.nombre_completo || v.email}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-neutral-700 mb-1">Prioridad Inicial</label>
+                <select
+                  value={assignPrioridad}
+                  onChange={(e) => setAssignPrioridad(e.target.value)}
+                  className="w-full border border-neutral-200 rounded-lg p-3 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                >
+                  <option value="Alta">Alta</option>
+                  <option value="Media">Media</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 mt-4 cursor-pointer p-3 bg-neutral-50 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition-colors">
+                <input type="checkbox" checked={isReactivacion} onChange={(e) => setIsReactivacion(e.target.checked)} className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-neutral-800">Cliente Reactivado</span>
+                  <span className="text-xs text-neutral-500">Marcar si son clientes de la base histórica</span>
+                </div>
+              </label>
+            </div>
+            <div className="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex justify-end gap-3">
+              <button onClick={() => setIsAssignModalOpen(false)} className="px-5 py-2.5 text-neutral-600 hover:bg-neutral-200 rounded-lg font-semibold transition-colors">Cancelar</button>
+              <button onClick={handleMassAssign} disabled={loading || !assignVendedorId} className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold shadow-sm transition-colors disabled:opacity-50">
+                {loading ? 'Asignando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

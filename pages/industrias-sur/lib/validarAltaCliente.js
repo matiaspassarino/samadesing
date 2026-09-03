@@ -28,12 +28,6 @@ export const CAMPOS_OBLIGATORIOS_VENDEDOR = [
   { campo: 'transporte_entrega',   label: 'Transporte/Condiciones de Entrega',  tab: 'Condiciones' },
 ];
 
-// Campos que solo puede cargar el Admin
-export const CAMPOS_OBLIGATORIOS_ADMIN = [
-  { campo: 'condiciones_pago',          label: 'Condiciones de Pago',      tab: 'Condiciones' },
-  { campo: 'limite_crediticio',         label: 'Límite Crediticio',        tab: 'Condiciones' },
-  { campo: 'observaciones_comerciales', label: 'Observaciones Comerciales', tab: 'Condiciones' },
-];
 
 /**
  * Valida si un contacto tiene todos los campos obligatorios del Vendedor completos.
@@ -67,19 +61,14 @@ export function validarAltaCliente(contacto) {
 export function calcularEstadoTabs(formData, userRole = 'Vendedor') {
   const camposEmpresa = ['razon_social', 'nombre_comercial', 'pais', 'domicilio', 'localidad', 'provincia', 'codigo_postal', 'cuit', 'condicion_iva'];
   const camposContactos = ['resp_compras_nombre', 'resp_compras_telefono', 'resp_compras_email', 'resp_pagos_nombre', 'resp_pagos_telefono', 'resp_pagos_email'];
-  const camposCondicionesVendedor = ['nombre_facturacion', 'domicilio_entrega', 'localidad_entrega', 'provincia_entrega', 'horario_atencion', 'transporte_entrega'];
-  const camposCondicionesAdmin = ['condiciones_pago', 'limite_crediticio', 'observaciones_comerciales'];
+  const camposCondiciones = ['nombre_facturacion', 'domicilio_entrega', 'localidad_entrega', 'provincia_entrega', 'horario_atencion', 'transporte_entrega'];
 
   const isComplete = (campos) => campos.every(c => formData[c]?.toString().trim());
-
-  const camposCondicionesTotales = userRole === 'Admin' || userRole === 'Dev'
-    ? [...camposCondicionesVendedor, ...camposCondicionesAdmin]
-    : camposCondicionesVendedor;
 
   return {
     empresa:     isComplete(camposEmpresa) ? 'complete' : 'incomplete',
     contactos:   isComplete(camposContactos) ? 'complete' : 'incomplete',
-    condiciones: isComplete(camposCondicionesTotales) ? 'complete' : 'incomplete',
+    condiciones: isComplete(camposCondiciones) ? 'complete' : 'incomplete',
     socios:      'optional',
     referencias: 'optional',
     historial:   'neutral',

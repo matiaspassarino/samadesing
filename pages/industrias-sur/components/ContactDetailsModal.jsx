@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, CheckCircle, Clock, Trash2, Save, Building2, Phone, MapPin, Loader2, Mail, Users, FileText, Check, AlertTriangle, ChevronRight, Plus, History } from 'lucide-react';
+import { X, CheckCircle, Clock, Search, Filter, Trash2, Save, Building2, Phone, MapPin, Loader2, Mail, Users, FileText, Check, AlertTriangle, ChevronRight, Plus, History } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { calcularEstadoTabs, validarAltaCliente } from '../lib/validarAltaCliente';
 
@@ -93,6 +93,38 @@ const Select = ({ label, name, required, value, onChange, options, ...props }) =
 export default function ContactDetailsModal({ contacto, onClose, onRefresh, userRole = 'Admin', isDev = false }) {
   const FORM_TABS_ORDER = ['Empresa', 'Contactos', 'Condiciones', 'Socios', 'Referencias'];
   const [activeTab, setActiveTab] = useState('Empresa');
+  const [historialSearch, setHistorialSearch] = useState('');
+  const [historialTagFilter, setHistorialTagFilter] = useState('');
+
+  const formatTag = (tag) => {
+    if (!tag) return 'Registro';
+    const t = tag.toString().toLowerCase();
+    if (t.includes('exit')) return 'Exitoso';
+    if (t.includes('cat\u00E1logo') || t.includes('catalogo') || t.includes('catlogo')) {
+      if (t.includes('digital')) return 'Cat\u00E1logo Digital';
+      if (t.includes('fisico') || t.includes('f\u00EDsico')) return 'Cat\u00E1logo F\u00EDsico';
+      return 'Cat\u00E1logo';
+    }
+    if (t.includes('fallido')) return 'Fallido / Negativo';
+    if (t.includes('no contesta') || t.includes('no_contesta')) return 'No Contesta';
+    if (t.includes('recompra')) return 'Recompra';
+    if (t.includes('presupuesto')) return 'Presupuesto';
+    if (t.includes('registro')) return 'Registro';
+    
+    return tag.split(/[\s_]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  };
+
+  const getCardStyle = (tagFormatted) => {
+    const t = tagFormatted.toLowerCase();
+    if (t.includes('recompra')) return { bg: 'bg-[#F2E8FF]', text: 'text-[#4B286D]', subtext: 'text-[#6A478C]', dot: 'bg-[#9059FF]', border: 'border-white' };
+    if (t.includes('presupuesto')) return { bg: 'bg-[#FFF8D6]', text: 'text-[#6B5000]', subtext: 'text-[#8C6D00]', dot: 'bg-[#FFC000]', border: 'border-white' };
+    if (t.includes('exitoso') || t.includes('venta')) return { bg: 'bg-[#E3F9E5]', text: 'text-[#0E511D]', subtext: 'text-[#1D7731]', dot: 'bg-[#1EC849]', border: 'border-white' };
+    if (t.includes('fallido') || t.includes('descartar')) return { bg: 'bg-[#FFE5E5]', text: 'text-[#871616]', subtext: 'text-[#B02828]', dot: 'bg-[#FF4D4D]', border: 'border-white' };
+    if (t.includes('cat\u00E1logo') || t.includes('catalogo')) return { bg: 'bg-[#E5EFFF]', text: 'text-[#0D3678]', subtext: 'text-[#1E54AB]', dot: 'bg-[#3B82F6]', border: 'border-white' };
+    if (t.includes('tarea')) return { bg: 'bg-[#FFE5E5]', text: 'text-[#871616]', subtext: 'text-[#B02828]', dot: 'bg-[#FF4D4D]', border: 'border-white' };
+    return { bg: 'bg-[#F4F5F7]', text: 'text-[#253858]', subtext: 'text-[#5E6C84]', dot: 'bg-[#8993A4]', border: 'border-white' };
+  };
+
   
   // Estado general
   const [formData, setFormData] = useState({
@@ -233,6 +265,8 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
   const handleConvertToClient = async () => {
     const validacion = validarAltaCliente({
       ...formData,
+      email: formData.email?.trim() || null,
+      telefono: formData.telefono?.trim() || null,
       unidad_negocio: unidades.join(' , '),
       socios: socios,
       referencias_bancarias: refBancarias,
@@ -254,6 +288,8 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     setSavingInfo(true);
     const updateData = {
       ...formData,
+      email: formData.email?.trim() || null,
+      telefono: formData.telefono?.trim() || null,
       unidad_negocio: unidades.join(' , '),
       socios: socios,
       referencias_bancarias: refBancarias,
@@ -285,6 +321,24 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     setSavingInfo(false);
   };
 
+  
+  const uniqueTags = [...new Set(historial.map(item => item._isTarea ? 'Tarea' : formatTag(item.resultado || item.tipo_accion)))].filter(Boolean);
+
+  const filteredHistorial = historial.filter(item => {
+    const searchMatch = (item.titulo || item.tipo_accion || item.notas || '').toLowerCase().includes(historialSearch.toLowerCase());
+    const itemTag = item._isTarea ? 'Tarea' : formatTag(item.resultado || item.tipo_accion);
+    const tagMatch = !historialTagFilter || itemTag === historialTagFilter;
+    return searchMatch && tagMatch;
+  });
+
+  const groupedHistorial = filteredHistorial.reduce((groups, item) => {
+    const date = new Date(item.fecha_creacion).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const capitalizedDate = date.charAt(0).toUpperCase() + date.slice(1);
+    if (!groups[capitalizedDate]) groups[capitalizedDate] = [];
+    groups[capitalizedDate].push(item);
+    return groups;
+  }, {});
+
   const handleSaveContactInfo = async (e) => {
     if (e) e.preventDefault();
     
@@ -298,6 +352,8 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     
     const updateData = {
       ...formData,
+      email: formData.email?.trim() || null,
+      telefono: formData.telefono?.trim() || null,
       unidad_negocio: unidades.join(' , '),
       socios: socios,
       referencias_bancarias: refBancarias,
@@ -360,21 +416,52 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 sm:p-4">
       <div className="bg-white w-full sm:rounded-2xl sm:max-w-6xl h-[95vh] shadow-2xl flex flex-col overflow-hidden rounded-t-2xl">
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 lg:p-5 border-b border-neutral-200 bg-neutral-50 shrink-0">
-          <div className="min-w-0 flex-1">
-            <h3 className="font-heading font-bold text-lg text-neutral-800">
-              {['Nuevo', 'Asignado'].includes(contacto.estado_actual) ? 'Alta de Prospecto' : 'Ficha del Cliente'}
-            </h3>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <p className="text-sm text-neutral-600 font-medium truncate">{contacto.razon_social}</p>
-              <span className="px-2 py-0.5 bg-primary-100 text-primary-800 rounded text-xs font-bold shrink-0">{contacto.estado_actual}</span>
+        {/* Header Banner */}
+          <div className="flex flex-col p-5 bg-gradient-to-r from-primary-900 to-primary-700 shrink-0 text-white relative">
+            <button onClick={onClose} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-xl transition-colors"><X size={24} /></button>
+            <div className="flex items-center gap-3 mb-2 pr-12">
+              <h2 className="text-2xl font-bold font-heading truncate">{contacto.razon_social || 'Nueva Empresa'}</h2>
+              
+              {/* Etiqueta Lead/Cliente grande */}
+              {['Venta', 'Recompra', 'CLIENTE REACTIVADO'].includes(contacto.estado_actual) ? (
+                 <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-lg text-sm font-bold tracking-wide uppercase">CLIENTE</span>
+              ) : (
+                 <span className="px-3 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 rounded-lg text-sm font-bold tracking-wide uppercase">LEAD</span>
+              )}
+              <span className="px-2.5 py-1 bg-white/10 rounded-md text-[10px] font-bold tracking-wider text-white/90 border border-white/20 uppercase">{contacto.estado_actual}</span>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-4 text-sm font-medium mt-1">
+              <div className="flex items-center gap-1.5 text-primary-200">
+                <Building2 size={16} />
+                <span>{unidades && unidades.length > 0 ? unidades.join(', ') : 'Sin Unidad Asignada'}</span>
+              </div>
+              
+              <div className="w-1 h-1 rounded-full bg-primary-400/50"></div>
+              
+              <div className="flex items-center gap-1.5">
+                <Phone size={16} className={!formData.telefono ? 'text-red-400' : 'text-primary-200'} />
+                {formData.telefono ? (
+                  <span>{formData.telefono}</span>
+                ) : (
+                  <span className="text-red-300 bg-red-500/20 px-1.5 py-0.5 rounded text-xs">Falta teléfono</span>
+                )}
+              </div>
+              
+              <div className="w-1 h-1 rounded-full bg-primary-400/50"></div>
+              
+              <div className="flex items-center gap-1.5">
+                <Mail size={16} className={!formData.email ? 'text-red-400' : 'text-primary-200'} />
+                {formData.email ? (
+                  <span>{formData.email}</span>
+                ) : (
+                  <span className="text-red-300 bg-red-500/20 px-1.5 py-0.5 rounded text-xs">Falta email</span>
+                )}
+              </div>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded-xl transition-colors ml-2 shrink-0"><X size={24} /></button>
-        </div>
-
-        {/* Body */}
+          
+          {/* Body */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           
           {/* Sidebar Navigation */}
@@ -411,7 +498,7 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
               
               {activeTab === 'Empresa' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <h4 className="text-lg font-bold text-neutral-800 mb-6 flex items-center gap-2"><Building2 className="text-primary-500" /> Información de la Empresa</h4>
+                  
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="md:col-span-2"><Input label="Razón Social" name="razon_social" required value={formData.razon_social} onChange={handleChange} /></div>
@@ -508,31 +595,23 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
                     </div>
                   </div>
 
-                  {(userRole === 'Admin' || userRole === 'Dev') && (
-                    <div className="bg-primary-50 p-5 rounded-xl border border-primary-200">
-                      <h5 className="font-bold text-primary-900 mb-4 flex items-center gap-2">🛡️ Autorización Crediticia (Solo Admin)</h5>
+                  <div className="bg-primary-50 p-5 rounded-xl border border-primary-200 mt-6">
+                      <h5 className="font-bold text-primary-900 mb-4 flex items-center gap-2">Autorización Crediticia</h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input label="Condiciones de pago (plazo)" name="condiciones_pago" required={userRole === 'Admin'} value={formData.condiciones_pago} onChange={handleChange} />
-                        <Input label="Límites crediticios" name="limite_crediticio" required={userRole === 'Admin'} value={formData.limite_crediticio} onChange={handleChange} />
+                        <Input label="Condiciones de pago (plazo)" name="condiciones_pago" value={formData.condiciones_pago} onChange={handleChange} />
+                        <Input label="Límites crediticios" name="limite_crediticio" value={formData.limite_crediticio} onChange={handleChange} />
                         <div className="md:col-span-2">
                           <label className="block text-xs font-semibold text-primary-900 mb-1">Observaciones comerciales</label>
                           <textarea
                             name="observaciones_comerciales"
                             value={formData.observaciones_comerciales}
                             onChange={handleChange}
-                            required={userRole === 'Admin'}
                             className="w-full bg-white border border-primary-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none transition-all min-h-[80px]"
                           />
                         </div>
                       </div>
                     </div>
-                  )}
-                  {userRole !== 'Admin' && userRole !== 'Dev' && (
-                     <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 text-sm text-neutral-600 flex items-start gap-2 mt-4">
-                        <AlertTriangle className="text-yellow-500 shrink-0" size={18} />
-                        Las condiciones de pago y límite crediticio serán completadas por Administración.
-                     </div>
-                  )}
+                  
                 </div>
               )}
 
@@ -682,61 +761,103 @@ export default function ContactDetailsModal({ contacto, onClose, onRefresh, user
               )}
             </form>
             
-            {/* Tab Historial (Completamente distinto, no es form) */}
-            {activeTab === 'Historial' && (
-               <div className="flex flex-col lg:flex-row flex-1 animate-in fade-in slide-in-from-right-4 duration-300">
-                  {/* Lista de Historial */}
-                  <div className="flex-1 p-5 lg:p-8 overflow-y-auto bg-neutral-50/50">
-                    <h4 className="text-lg font-bold text-neutral-800 mb-6 flex items-center gap-2"><History className="text-primary-500" /> Trazabilidad y Movimientos</h4>
+            {/* Tab Historial */}
+              {activeTab === 'Historial' && (
+                 <div className="flex flex-col lg:flex-row-reverse flex-1 animate-in fade-in slide-in-from-right-4 duration-300 bg-white">
                     
-                    {loadingHistorial ? (
-                      <div className="flex items-center justify-center py-10"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
-                    ) : historial.length === 0 ? (
-                      <div className="text-center py-10">
-                        <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3"><History className="text-neutral-300" size={32} /></div>
-                        <h4 className="font-semibold text-neutral-700">Aún no hay interacciones</h4>
-                        <p className="text-sm text-neutral-500 mt-1">Registra la primera interacción en el panel derecho.</p>
-                      </div>
-                    ) : (
+                    {/* Sidebar de Filtros (A LA DERECHA) */}
+                    <div className="w-full lg:w-72 lg:border-l border-b lg:border-b-0 border-neutral-200 bg-neutral-50/50 p-5 flex flex-col shrink-0">
+                      <h4 className="text-sm font-bold text-neutral-800 mb-4 flex items-center gap-2 uppercase tracking-wide"><Filter size={16} className="text-primary-500" /> Filtros</h4>
+                      
                       <div className="space-y-4">
-                        {historial.map((item) => (
-                          <div key={item.id} className="bg-white border border-neutral-200 p-4 rounded-xl shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                              <span className="font-semibold text-sm text-neutral-800 flex items-center gap-2 flex-wrap">
-                                {item._isTarea ? `Tarea: ${item.titulo}` : item.tipo_accion}
-                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide ${
-                                  item._isTarea
-                                    ? item.completada ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                    : item.resultado?.toLowerCase() === 'exitoso' ? 'bg-green-100 text-green-700' : item.resultado?.toLowerCase() === 'descartar' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                                }`}>
-                                  {item._isTarea ? (item.completada ? 'Completada' : 'Pendiente') : (item.resultado || 'Registro')}
-                                </span>
-                              </span>
-                              <span className="text-xs text-neutral-500 shrink-0 ml-2">{new Date(item.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <p className="text-sm text-neutral-600">{item._isTarea ? item.descripcion || 'Sin descripción adicional.' : item.notas || 'Sin comentarios.'}</p>
+                        <div>
+                          <label className="block text-xs font-semibold text-neutral-600 mb-1">Buscar en historial</label>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={16} />
+                            <input 
+                              type="text" 
+                              value={historialSearch}
+                              onChange={(e) => setHistorialSearch(e.target.value)}
+                              placeholder="Palabra clave..." 
+                              className="w-full pl-9 pr-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                            />
                           </div>
-                        ))}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-semibold text-neutral-600 mb-1">Filtrar por Etiqueta</label>
+                          <select 
+                            value={historialTagFilter}
+                            onChange={(e) => setHistorialTagFilter(e.target.value)}
+                            className="w-full bg-white border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                          >
+                            <option value="">Todas las etiquetas</option>
+                            {uniqueTags.map(tag => (
+                              <option key={tag} value={tag}>{tag}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* Action Panel: Registrar Interacción */}
-                  <div className="w-full lg:w-80 bg-neutral-50 border-t lg:border-t-0 lg:border-l border-neutral-200 p-5 lg:p-6 shrink-0 flex flex-col">
-                    <h4 className="font-bold text-neutral-800 flex items-center gap-2 mb-6"><Phone className="text-primary-500" size={18} />Registrar Interacción</h4>
-                    <form onSubmit={handleSubmitInteraction} className="flex flex-col flex-1">
-                      <div className="mb-6 flex-1 flex flex-col">
-                        <label className="block text-sm font-semibold text-neutral-700 mb-2">Comentarios de la gestión</label>
-                        <textarea className="w-full flex-1 bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all resize-none min-h-[120px]" placeholder="Detalles de la charla..." value={comentarios} onChange={(e) => setComentarios(e.target.value)} required></textarea>
-                      </div>
-                      <button type="submit" disabled={savingInteraction || !comentarios.trim()} className="w-full py-3 rounded-xl font-bold bg-primary-500 hover:bg-primary-900 text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {savingInteraction ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} Guardar Interacción
-                      </button>
-                    </form>
-                  </div>
-               </div>
-            )}
-          </div>
+                    </div>
+
+                    {/* Timeline (A LA IZQUIERDA/CENTRO) */}
+                    <div className="flex-1 p-5 lg:p-8 overflow-y-auto">
+                      {loadingHistorial ? (
+                        <div className="flex items-center justify-center py-10"><Loader2 className="animate-spin text-primary-500" size={32} /></div>
+                      ) : Object.keys(groupedHistorial).length === 0 ? (
+                        <div className="text-center py-10">
+                          <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3"><History className="text-neutral-300" size={32} /></div>
+                          <h4 className="font-semibold text-neutral-700">No hay registros</h4>
+                          <p className="text-sm text-neutral-500 mt-1">Prueba cambiando los filtros.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-10 relative before:absolute before:top-4 before:bottom-0 before:left-[21px] before:w-px before:bg-neutral-200">
+                          {Object.entries(groupedHistorial).map(([date, items]) => (
+                            <div key={date} className="relative z-10">
+                              <div className="sticky top-0 z-10 mb-5 pl-12 bg-white py-2">
+                                <div className="inline-flex items-center">
+                                  <span className="text-neutral-500 text-[11px] font-bold uppercase tracking-widest">{date}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-4">
+                                {items.map(item => {
+                                  const tagText = item._isTarea ? 'Tarea' : formatTag(item.resultado || item.tipo_accion);
+                                  const style = getCardStyle(item._isTarea ? 'Tarea' : tagText);
+                                  
+                                  return (
+                                    <div key={item.id} className="relative flex items-start gap-4 group">
+                                      {/* Timeline Dot */}
+                                      <div className="flex items-center justify-center w-11 h-11 rounded-full border-4 border-white bg-white shrink-0 relative z-10 mt-1">
+                                        <div className={`w-3.5 h-3.5 rounded-full ring-4 ring-white ${style.dot}`}></div>
+                                      </div>
+                                      
+                                      {/* Colored Card */}
+                                      <div className={`flex-1 p-4 ${style.bg} rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className={`text-sm font-bold ${style.text}`}>
+                                            {item._isTarea ? item.titulo : tagText}
+                                          </span>
+                                          <span className={`text-xs font-semibold ${style.text} opacity-80`}>
+                                            {new Date(item.fecha_creacion).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                          </span>
+                                        </div>
+                                        {(item.notas || item.descripcion) && (
+                                          <p className={`text-[13px] leading-relaxed ${style.subtext}`}>{item.notas || item.descripcion}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                 </div>
+              )}
+            </div>
         </div>
       </div>
     </div>

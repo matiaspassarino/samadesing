@@ -1,12 +1,28 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, PhoneCall, CalendarClock, ThumbsDown } from 'lucide-react';
+import { X, CheckCircle, PhoneCall, CalendarClock, ThumbsDown, BookOpen, FileText, PhoneOff, ShoppingBag } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-const OPTIONS = [
-  { id: 'exit', label: 'Contacto Exitoso', desc: 'Avanza a oportunidad', icon: CheckCircle, bgActive: 'bg-green-500 border-green-500 text-white', hoverClass: 'hover:bg-green-500 hover:border-green-500 hover:text-white' },
-  { id: 'rellamar', label: 'Rellamar', desc: 'Mantiene como lead', icon: PhoneCall, bgActive: 'bg-primary-500 border-primary-500 text-white', hoverClass: 'hover:bg-primary-500 hover:border-primary-500 hover:text-white' },
-  { id: 'diferido', label: 'Diferido', desc: 'Reprogramar contacto', icon: CalendarClock, bgActive: 'bg-yellow-500 border-yellow-500 text-white', hoverClass: 'hover:bg-yellow-500 hover:border-yellow-500 hover:text-white' },
-  { id: 'fallido', label: 'Fallido / Negativo', desc: 'Marcar como perdido', icon: ThumbsDown, bgActive: 'bg-red-500 border-red-500 text-white', hoverClass: 'hover:bg-red-500 hover:border-red-500 hover:text-white' },
+const LEAD_OPTIONS = [
+  { id: 'venta', label: 'Venta', desc: 'Convierte en cliente', icon: ShoppingBag, bgActive: 'bg-emerald-500 border-emerald-500 text-white', hoverClass: 'hover:bg-emerald-500 hover:border-emerald-500 hover:text-white' },
+  { id: 'exit', label: 'Contacto Exitoso', desc: 'Atendió la llamada', icon: CheckCircle, bgActive: 'bg-green-500 border-green-500 text-white', hoverClass: 'hover:bg-green-500 hover:border-green-500 hover:text-white' },
+  { id: 'catalogo_digital', label: 'Catálogo Digital', desc: 'Registra envío', icon: BookOpen, bgActive: 'bg-blue-500 border-blue-500 text-white', hoverClass: 'hover:bg-blue-500 hover:border-blue-500 hover:text-white' },
+  { id: 'presupuesto', label: 'Presupuesto', desc: 'Seguimiento a 48hs', icon: FileText, bgActive: 'bg-indigo-500 border-indigo-500 text-white', hoverClass: 'hover:bg-indigo-500 hover:border-indigo-500 hover:text-white' },
+  { id: 'diferido', label: 'Diferido', desc: 'Reprogramar llamada', icon: CalendarClock, bgActive: 'bg-yellow-500 border-yellow-500 text-white', hoverClass: 'hover:bg-yellow-500 hover:border-yellow-500 hover:text-white' },
+  { id: 'rellamar', label: 'No Contesta', desc: 'Rellamar mañana', icon: PhoneCall, bgActive: 'bg-orange-500 border-orange-500 text-white', hoverClass: 'hover:bg-orange-500 hover:border-orange-500 hover:text-white' },
+  { id: 'fallido', label: 'Fallido / Negativo', desc: 'Descartar lead', icon: ThumbsDown, bgActive: 'bg-red-500 border-red-500 text-white', hoverClass: 'hover:bg-red-500 hover:border-red-500 hover:text-white' },
+];
+
+const TASK_OPTIONS = [
+  { id: 'exit', label: 'Completar Tarea', desc: 'Marcar como finalizada', icon: CheckCircle, bgActive: 'bg-green-500 border-green-500 text-white', hoverClass: 'hover:bg-green-500 hover:border-green-500 hover:text-white' },
+  { id: 'diferido', label: 'Reprogramar', desc: 'Posponer tarea', icon: CalendarClock, bgActive: 'bg-yellow-500 border-yellow-500 text-white', hoverClass: 'hover:bg-yellow-500 hover:border-yellow-500 hover:text-white' },
+];
+
+const CLIENT_OPTIONS = [
+  { id: 'catalogo_digital', label: 'Envió Catálogo (Digital)', desc: 'Registra envío', icon: BookOpen, bgActive: 'bg-blue-500 border-blue-500 text-white', hoverClass: 'hover:bg-blue-500 hover:border-blue-500 hover:text-white' },
+  { id: 'catalogo_fisico', label: 'Envió Catálogo (Físico)', desc: 'Registra envío', icon: BookOpen, bgActive: 'bg-indigo-500 border-indigo-500 text-white', hoverClass: 'hover:bg-indigo-500 hover:border-indigo-500 hover:text-white' },
+  { id: 'presupuesto', label: 'Envió Presupuesto', desc: 'Seguimiento a 48hs', icon: FileText, bgActive: 'bg-emerald-500 border-emerald-500 text-white', hoverClass: 'hover:bg-emerald-500 hover:border-emerald-500 hover:text-white' },
+  { id: 'no_contesta', label: 'No Contesta', desc: 'Llamar mañana', icon: PhoneOff, bgActive: 'bg-orange-500 border-orange-500 text-white', hoverClass: 'hover:bg-orange-500 hover:border-orange-500 hover:text-white' },
+  { id: 'recompra', label: 'Nueva Venta', desc: 'Recompra generada', icon: ShoppingBag, bgActive: 'bg-green-500 border-green-500 text-white', hoverClass: 'hover:bg-green-500 hover:border-green-500 hover:text-white' }
 ];
 
 export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
@@ -14,8 +30,15 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
   const [deferDate, setDeferDate] = useState('');
   const [notes, setNotes] = useState('');
 
+  const [vendedorId, setVendedorId] = useState('');
+
+  const isAgendaTask = task?.isAgendaTask;
+  const isClientTask = task?.status === 'Venta' || task?.status === 'Recompra' || task?.status === 'CLIENTE REACTIVADO';
+  const OPTIONS = isAgendaTask ? TASK_OPTIONS : (isClientTask ? CLIENT_OPTIONS : LEAD_OPTIONS);
+  
   const isFailed = selectedOption === 'fallido';
   const isDeferred = selectedOption === 'diferido';
+  const isExit = selectedOption === 'exit' || selectedOption === 'venta';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,9 +50,15 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
       return;
     }
 
+    if (isExit && !isAgendaTask && task?.vendedores && task.vendedores.length > 0 && !vendedorId) {
+      toast.error('Por favor selecciona un vendedor.');
+      return;
+    }
+
     onSave({
       option: selectedOption,
       deferDate: isDeferred ? deferDate : null,
+      vendedorId: isExit ? vendedorId : null,
       notes
     });
   };
@@ -41,10 +70,10 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-neutral-200">
           <div className="flex-1">
-            <h2 className="font-heading font-bold text-xl text-neutral-800">Registrar Contacto</h2>
+            <h2 className="font-heading font-bold text-xl text-neutral-800">{isAgendaTask ? 'Resolver Tarea' : 'Registrar Contacto'}</h2>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-sm text-neutral-500 font-medium truncate max-w-[200px] sm:max-w-xs">{task?.leadName}</p>
-              {onEditLead && (
+              {!isAgendaTask && onEditLead && (
                 <button 
                   type="button" 
                   onClick={onEditLead} 
@@ -66,7 +95,7 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
         {/* Body */}
         <form onSubmit={handleSubmit} className="overflow-y-auto p-5 flex flex-col gap-6">
           
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${isAgendaTask ? 'grid-cols-2' : 'grid-cols-1 xs:grid-cols-2 sm:grid-cols-2'}`}>
             {OPTIONS.map((opt) => {
               const isSelected = selectedOption === opt.id;
               const Icon = opt.icon;
@@ -92,13 +121,32 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
           </div>
 
           {/* Conditional inputs */}
+          {isExit && !isAgendaTask && task?.vendedores && task.vendedores.length > 0 && (
+            <div className="animate-in slide-in-from-top-2 fade-in duration-200">
+              <label className="block text-sm font-semibold text-neutral-800 mb-2">
+                Asignar al Vendedor
+              </label>
+              <select
+                value={vendedorId}
+                onChange={(e) => setVendedorId(e.target.value)}
+                required
+                className="w-full border border-neutral-200 rounded-lg p-3 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+              >
+                <option value="">Seleccione vendedor...</option>
+                {task.vendedores.map(v => (
+                  <option key={v.id} value={v.id}>{v.nombre_completo || v.email}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {isDeferred && (
             <div className="animate-in slide-in-from-top-2 fade-in duration-200">
               <label className="block text-sm font-semibold text-neutral-800 mb-2">
-                Reprogramar para el día
+                Reprogramar para el día y hora
               </label>
               <input 
-                type="date" 
+                type="datetime-local" 
                 value={deferDate}
                 onChange={(e) => setDeferDate(e.target.value)}
                 required
@@ -109,14 +157,14 @@ export default function ResolutionModal({ task, onClose, onSave, onEditLead }) {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-800 mb-2">
-              Notas del contacto {isFailed && <span className="text-danger">*</span>}
+              {isAgendaTask ? 'Notas de la tarea' : `Notas del contacto ${isFailed ? '*' : ''}`}
             </label>
             <textarea 
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               required={isFailed}
-              placeholder={isFailed ? "Explica el motivo del rechazo..." : "Opcional. Detalles de la llamada..."}
+              placeholder={isFailed ? "Explica el motivo del rechazo..." : (isAgendaTask ? "Detalles sobre la resolución de la tarea..." : "Opcional. Detalles de la llamada...")}
               className={`w-full border rounded-lg p-3 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                 isFailed && !notes ? 'border-danger/50' : 'border-neutral-200'
               }`}

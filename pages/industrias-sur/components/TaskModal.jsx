@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar, Type, AlignLeft, Users, Briefcase } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { getTable } from '../lib/db';
 
 export default function TaskModal({ onClose, onSave, vendedores, isDev, session }) {
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ export default function TaskModal({ onClose, onSave, vendedores, isDev, session 
     
     const fetchContactos = async () => {
       const { data, error } = await supabase
-        .from(isDev ? 'contactos_sandbox' : 'contactos')
+        .from(getTable('contactos', isDev))
         .select('id, razon_social')
         .eq('vendedor_id', targetVendedorId)
         .order('razon_social');
@@ -60,7 +61,6 @@ export default function TaskModal({ onClose, onSave, vendedores, isDev, session 
       });
       onClose();
     } catch (err) {
-      console.error(err);
       toast.error('Error al guardar la tarea');
     } finally {
       setLoading(false);

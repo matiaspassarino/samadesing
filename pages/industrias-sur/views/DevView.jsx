@@ -105,6 +105,34 @@ export default function DevView({ session }) {
     }
   };
 
+  const handleSeedFullClient = async () => {
+    try {
+      const mockClient = {
+        razon_social: `Mock Cliente ${Math.floor(Math.random() * 10000)}`,
+        estado_actual: 'Venta',
+        cuit: `30${Math.floor(100000000 + Math.random() * 90000000)}0`,
+        condicion_iva: 'Responsable Inscripto',
+        telefono: `11${Math.floor(10000000 + Math.random() * 90000000)}`,
+        provincia: 'Buenos Aires',
+        localidad: 'CABA',
+        codigo_postal: '1000',
+        domicilio: 'Av. Corrientes 1234',
+        fecha_creacion: new Date().toISOString()
+      };
+      const res = await supabase.from('contactos_sandbox').insert(mockClient);
+      if (res.error) {
+        toast.error("Error BD: " + res.error.message);
+        console.error(res.error);
+      } else {
+        toast.success("Cliente de prueba creado (Sin vendedor asignado).");
+        fetchData();
+      }
+    } catch (e) {
+      toast.error("Excepción al crear cliente: " + e.message);
+      console.error(e);
+    }
+  };
+
   const handleSaveGeneralTask = async (formData) => {
     if (!formData.vendedor_id) {
       toast.error('Debes seleccionar un usuario para asignar la tarea.');
@@ -189,6 +217,12 @@ export default function DevView({ session }) {
             + Generar Lead "Nuevo"
           </button>
           <button 
+            onClick={handleSeedFullClient}
+            className="bg-purple-50 text-purple-700 hover:bg-purple-100 px-4 py-2 rounded-lg font-medium transition-colors border border-purple-200"
+          >
+            + Generar Cliente Completo (Sin Asignar)
+          </button>
+          <button 
             onClick={handleResetSandbox}
             className="bg-danger/10 text-danger hover:bg-danger/20 px-4 py-2 rounded-lg font-medium transition-colors border border-danger/20"
           >
@@ -230,8 +264,6 @@ export default function DevView({ session }) {
                   <td className="px-6 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
                       user.rol === 'Dev' ? 'bg-neutral-900 text-white' :
-                      user.rol === 'Administrador' ? 'bg-primary-100 text-primary-800' :
-                      user.rol === 'Supervisor' ? 'bg-secondary-100 text-secondary-800' :
                       'bg-neutral-100 text-neutral-700'
                     }`}>
                       {user.rol}
@@ -246,10 +278,8 @@ export default function DevView({ session }) {
                         className="bg-white border border-neutral-300 text-neutral-700 text-sm rounded px-2 py-1 outline-none focus:border-primary-500 w-full"
                       >
                         <option value="Dev">Dev</option>
-                        <option value="Administrador">Administrador</option>
                         <option value="Gerente">Gerente</option>
                         <option value="Prospector">Prospector</option>
-                        <option value="Supervisor">Supervisor</option>
                         <option value="Vendedor">Vendedor</option>
                       </select>
                       {savingId === user.id && <Loader2 className="animate-spin text-primary-500" size={16} />}

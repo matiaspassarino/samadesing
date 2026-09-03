@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import Auth from './components/Auth';
-import AdminView from './views/AdminView';
 import ProspectorView from './views/ProspectorView';
-import SupervisorView from './views/SupervisorView';
 import VendedorView from './views/VendedorView';
 import DevView from './views/DevView';
 import GerenteView from './views/GerenteView';
@@ -106,14 +104,12 @@ export default function App() {
       {/* Renderizado condicional basado en el SIMULATED ROLE */}
       <main className="max-w-7xl mx-auto px-4 py-6 w-full flex-1">
         {simulatedRole === 'Dev' && <DevView session={session} />}
-        {simulatedRole === 'Administrador' && <AdminView isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Prospector' && <ProspectorView isDev={userRole === 'Dev'} />}
-        {simulatedRole === 'Supervisor' && <SupervisorView session={session} isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Vendedor' && <VendedorView session={session} isDev={userRole === 'Dev'} />}
         {simulatedRole === 'Gerente' && <GerenteView isDev={userRole === 'Dev'} />}
         
         {/* Fallback */}
-        {!['Dev', 'Administrador', 'Prospector', 'Supervisor', 'Vendedor', 'Gerente'].includes(simulatedRole) && (
+        {!['Dev', 'Prospector', 'Vendedor', 'Gerente'].includes(simulatedRole) && (
           <div className="p-8 text-center text-danger bg-danger/10 rounded-xl font-medium border border-danger/20">
             Rol no reconocido. Contacta a soporte.
           </div>
